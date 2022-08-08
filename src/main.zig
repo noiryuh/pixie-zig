@@ -237,9 +237,48 @@ pub const Image = opaque {
     extern fn pixie_image_set_height(self: *Image, height: isize) callconv(.C) void;
     pub const setHeight = pixie_image_set_height;
 
+    extern fn pixie_get_color(self: *Image, x: isize, y: isize) callconv(.C) Color;
+    pub const getColor = pixie_get_color;
+
+    extern fn pixie_set_color(self: *Image, x: isize, y: isize, color: Color) callconv(.C) void;
+    pub const setColor = pixie_set_color;
+
     extern fn pixie_image_copy(self: *Image) callconv(.C) *Image;
     pub const copy = pixie_image_copy;
 
     extern fn pixie_image_resize(self: *Image, width: isize, height: isize) callconv(.C) *Image;
     pub const resize = pixie_image_resize;
+
+    extern fn pixie_image_fill(self: *Image, color: Color) callconv(.C) void;
+    pub const fill = pixie_image_fill;
+
+    extern fn pixie_image_flip_horizontal(self: *Image) callconv(.C) void;
+    pub const flipHorizontal = pixie_image_flip_horizontal;
+
+    extern fn pixie_image_flip_vertical(self: *Image) callconv(.C) void;
+    pub const flipVertical = pixie_image_flip_vertical;
+
+    extern fn pixie_image_sub_image(self: *Image, x: isize, y: isize, w: isize, h: isize) callconv(.C) *Image;
+    pub const subImage = pixie_image_sub_image;
+
+    extern fn pixie_image_super_image(self: *Image, x: isize, u: isize, w: isize, h: isize) callconv(.C) *Image;
+    pub const superImage = pixie_image_super_image;
+
+    extern fn pixie_image_minify_by2(self: *Image, power: isize) callconv(.C) *Image;
+    pub const minifyBy2 = pixie_image_minify_by2;
+
+    extern fn pixie_image_magnify_by2(self: *Image, power: isize) callconv(.C) *Image;
+    pub const magnifyBy2 = pixie_image_magnify_by2;
+
+    extern fn pixie_image_apply_opacity(self: *Image, opacity: f32) callconv(.C) void;
+    pub const applyOpacity = pixie_image_apply_opacity;
+
+    extern fn pixie_image_invert(self: *Image) callconv(.C) void;
+    pub const invert = pixie_image_invert;
+
+    extern fn pixie_image_blur(self: *Image, radius: f32, out_of_bounds: Color) callconv(.C) void;
+    pub const blur = pixie_image_blur;
+
+    extern fn pixie_image_shadow(self: *Image, offset: Vector2, spread: f32, blur: f32, color: Color) callconv(.C) *Image;
+    pub const shadow = pixie_image_shadow;
 };
