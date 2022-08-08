@@ -13,7 +13,7 @@ const pixie = @import("pixie-zig/build.zig");
 pub fn build(b: *std.build.Builder) void {
     // If you prefer building from source
     // Make sure you already have `nim` (and `nimble`) in $PATH
-    pixie.linkPkg(b, exe, .{.build_exe = .{
+    pixie.linkPkg(b, exe, .{.build_pixie = .{
         .install_pixie = true, // Run `nimble install pixie` for building 'pixie_ffi.nim'
         .option = .{
             // If you prefer using `zig cc`
@@ -25,7 +25,8 @@ pub fn build(b: *std.build.Builder) void {
         },
     }});
 
-    // If you already have pre-installed library
+    // If you prefer linking with shared/static library
+    // or already have pre-installed library
     pixie.linkPkg(b, exe, .{.link_pixie = .{
         .path = "/path/to/directory/containing/libpixie.*", // .so, .dll, .dylib
     }});
