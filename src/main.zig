@@ -7,7 +7,9 @@ extern fn pixie_check_error() callconv(.C) bool;
 pub const checkError = pixie_check_error;
 
 extern fn pixie_take_error() callconv(.C) [*:0]const u8;
-pub const takeError = pixie_take_error;
+pub inline fn takeError() [:0]const u8 {
+    return std.mem.span(pixie_take_error());
+}
 
 pub const FileFormat = enum(u8) {
     png,
@@ -159,7 +161,9 @@ pub const Color = extern struct {
     pub const init = pixie_color;
 
     extern fn pixie_parse_color(s: [*:0]const u8) callconv(.C) Self;
-    pub const initFromString = pixie_parse_color;
+    pub inline fn initFromString(s: [:0]const u8) Self {
+        return pixie_parse_color(s.ptr);
+    }
 
     extern fn pixie_color_eq(self: Self, other: Self) callconv(.C) bool;
     pub const eql = pixie_color_eq;
@@ -200,10 +204,14 @@ pub const ImageDimensions = extern struct {
     pub const init = pixie_image_dimensions;
 
     extern fn pixie_read_image_dimensions(path: [*:0]const u8) callconv(.C) Self;
-    pub const initFromImage = pixie_read_image_dimensions;
+    pub inline fn initFromImage(path: [:0]const u8) Self {
+        return pixie_read_image_dimensions(path.ptr);
+    }
 
     extern fn pixie_decode_image_dimensions(data: [*:0]const u8) callconv(.C) Self;
-    pub const initFromMemory = pixie_decode_image_dimensions;
+    pub inline fn initFromMemory(data: [:0]const u8) Self {
+        return pixie_decode_image_dimensions(data.ptr);
+    }
 
     extern fn pixie_image_dimensions_eq(self: Self, other: Self) callconv(.C) bool;
     pub const eql = pixie_image_dimensions_eq;
@@ -216,16 +224,22 @@ pub const Image = opaque {
     pub const initBlank = pixie_new_image;
 
     extern fn pixie_read_image(path: [*:0]const u8) callconv(.C) *Self;
-    pub const initFromImage = pixie_read_image;
+    pub inline fn initFromImage(path: [:0]const u8) *Self {
+        return pixie_read_image(path.ptr);
+    }
 
     extern fn pixie_decode_image(data: [*:0]const u8) callconv(.C) *Self;
-    pub const initFromMemory = pixie_decode_image;
+    pub inline fn initFromMemory(data: [:0]const u8) *Self {
+        return pixie_decode_image(data.ptr);
+    }
 
     extern fn pixie_image_unref(self: *Self) callconv(.C) void;
     pub const deinit = pixie_image_unref;
 
     extern fn pixie_image_write_file(self: *Self, path: [*:0]const u8) callconv(.C) void;
-    pub const writeToFile = pixie_image_write_file;
+    pub inline fn writeToFile(self: *Self, path: [:0]const u8) void {
+        return pixie_image_write_file(self, path.ptr);
+    }
 
     extern fn pixie_image_get_width(self: *Self) callconv(.C) isize;
     pub const getWidth = pixie_image_get_width;
