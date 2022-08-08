@@ -30,6 +30,7 @@ pub fn linkPkg(b: *std.build.Builder, exe: *std.build.LibExeObjStep, option: Lin
     switch (option) {
         .link_pixie => |opt| {
             exe.addLibraryPath(opt.path);
+            exe.linkSystemLibrary(opt.name);
         },
         .build_pixie => |opt| {
             _ = b.findProgram(
