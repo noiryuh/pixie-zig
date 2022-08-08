@@ -51,7 +51,7 @@ pub fn linkPkg(b: *std.build.Builder, exe: *std.build.LibExeObjStep, option: Lin
             }
 
             // Make a build command
-            const build_command = NimBuildOption.makeCommand(b.allocator, pixie_path ++ "/pixie_ffi.nim", opt.option) catch unreachable;
+            const build_command = NimBuild.makeCommand(b.allocator, pixie_path ++ "/pixie_ffi.nim", opt.option) catch unreachable;
             defer b.allocator.free(build_command);
 
             _ = b.exec(build_command) catch @panic("failed to build 'pixie'");
@@ -76,11 +76,11 @@ pub const LinkPkgOption = union(enum) {
         /// Install via `nimble`
         install_pixie: bool = false,
         /// Nim build options
-        option: NimBuildOption = .{},
+        option: NimBuild = .{},
     },
 };
 
-pub const NimBuildOption = struct {
+pub const NimBuild = struct {
     /// Build mode
     mode: BuildMode = .release,
     /// Garbage collector
@@ -94,7 +94,7 @@ pub const NimBuildOption = struct {
     /// Extra options
     extra_options: ?[]const []const u8 = null,
 
-    pub fn makeCommand(allocator: std.mem.Allocator, path: []const u8, option: NimBuildOption) ![][]const u8 {
+    pub fn makeCommand(allocator: std.mem.Allocator, path: []const u8, option: NimBuild) ![][]const u8 {
         var result = std.ArrayList([]const u8).init(allocator);
         errdefer result.deinit();
 
@@ -105,36 +105,38 @@ pub const NimBuildOption = struct {
         // Prevent duplicating 'main' symbol
         try result.append("--noMain:on");
 
-        const mode: []const u8 = switch (option.mode) {
+        // Add build mode
+        try result.append(switch (option.mode) {
             .debug => "-d:debug",
             .release => "-d:release",
             .danger => "-d:danger",
-        };
-        try result.append(mode);
+        });
 
-        const gc: []const u8 = switch (option.gc) {
+        // Choose garbage collector
+        try result.append(switch (option.gc) {
             .arc => "--gc:arc",
             .orc => "--gc:orc",
-        };
-        try result.append(gc);
+        });
 
-        const linkage: []const u8 = switch (option.linkage) {
+        // Choose library linkage
+        try result.append(switch (option.linkage) {
             .static => "--app:staticlib",
             .shared => "--app:lib",
-        };
-        try result.append(linkage);
+        });
 
-        const optimization: []const u8 = switch (option.optimization) {
+        // Add optimization
+        try result.append(switch (option.optimization) {
             .none => "--opt:none",
             .speed => "--opt:speed",
             .size => "--opt:size",
-        };
-        try result.append(optimization);
+        });
 
+        // Use LTO if enabled
         if (option.use_lto) {
             try result.append("-d:lto");
         }
 
+        // Add extra options
         if (option.extra_options) |extra_options| {
             try result.appendSlice(extra_options);
         }
