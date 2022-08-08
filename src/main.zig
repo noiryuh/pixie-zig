@@ -88,6 +88,12 @@ pub const TextCase = enum(u8) {
     title,
 };
 
+pub const miterLimitToAngle = pixie_miter_limit_to_angle;
+extern fn pixie_miter_limit_to_angle(limit: f32) callconv(.C) f32;
+
+pub const angleToMiterLimit = pixie_angle_to_miter_limit;
+extern fn pixie_angle_to_miter_limit(angle: f32) callconv(.C) f32;
+
 pub const Vector2 = extern struct {
     const Self = @This();
 
@@ -114,6 +120,18 @@ pub const Matrix3 = extern struct {
 
     pub const mul = pixie_matrix3_mul;
     extern fn pixie_matrix3_mul(self: Self, other: Self) callconv(.C) Self;
+
+    pub const translate = pixie_translate;
+    extern fn pixie_translate(x: f32, y: f32) callconv(.C) Self;
+
+    pub const rotate = pixie_rotate;
+    extern fn pixie_rotate(angle: f32) callconv(.C) Self;
+
+    pub const scale = pixie_scale;
+    extern fn pixie_scale(x: f32, y: f32) callconv(.C) Self;
+
+    pub const inverse = pixie_inverse;
+    extern fn pixie_inverse(matrix: Self) callconv(.C) Self;
 };
 
 pub const Rect = extern struct {
@@ -141,6 +159,9 @@ pub const Color = extern struct {
 
     pub const init = pixie_color;
     extern fn pixie_color(r: f32, g: f32, b: f32, a: f32) callconv(.C) Self;
+
+    pub const initFromString = pixie_parse_color;
+    extern fn pixie_parse_color(s: [*:0]const u8) callconv(.C) Self;
 
     pub const eql = pixie_color_eq;
     extern fn pixie_color_eq(self: Self, other: Self) callconv(.C) bool;
@@ -180,6 +201,49 @@ pub const ImageDimensions = extern struct {
     pub const init = pixie_image_dimensions;
     extern fn pixie_image_dimensions(width: isize, height: isize) callconv(.C) Self;
 
+    pub const initFromImage = pixie_read_image_dimensions;
+    extern fn pixie_read_image_dimensions(path: [*:0]const u8) callconv(.C) Self;
+
+    pub const initFromMemory = pixie_decode_image_dimensions;
+    extern fn pixie_decode_image_dimensions(data: [*:0]const u8) callconv(.C) Self;
+
     pub const eql = pixie_image_dimensions_eq;
     extern fn pixie_image_dimensions_eq(self: Self, other: Self) callconv(.C) bool;
+};
+
+pub const Image = opaque {
+    const Self = @This();
+
+    pub const initBlank = pixie_new_image;
+    extern fn pixie_new_image(width: isize, height: isize) callconv(.C) *Self;
+
+    pub const initFromImage = pixie_read_image;
+    extern fn pixie_read_image(path: [*:0]const u8) callconv(.C) *Self;
+
+    pub const initFromMemory = pixie_decode_image;
+    extern fn pixie_decode_image(data: [*:0]const u8) callconv(.C) *Self;
+
+    pub const deinit = pixie_image_unref;
+    extern fn pixie_image_unref(self: *Self) callconv(.C) void;
+
+    pub const writeToFile = pixie_image_write_file;
+    extern fn pixie_image_write_file(self: *Self, path: [*:0]const u8) callconv(.C) void;
+
+    pub const getWidth = pixie_image_get_width;
+    extern fn pixie_image_get_width(self: *Self) callconv(.C) isize;
+
+    pub const getHeight = pixie_image_get_height;
+    extern fn pixie_image_get_height(self: *Self) callconv(.C) isize;
+
+    pub const setWidth = pixie_image_set_width;
+    extern fn pixie_image_set_width(self: *Self, width: isize) callconv(.C) void;
+
+    pub const setHeight = pixie_image_set_height;
+    extern fn pixie_image_set_height(self: *Self, height: isize) callconv(.C) void;
+
+    pub const copy = pixie_image_copy;
+    extern fn pixie_image_copy(self: *Self) callconv(.C) *Self;
+
+    pub const resize = pixie_image_resize;
+    extern fn pixie_image_resize(self: *Self, width: isize, height: isize) callconv(.C) *Self;
 };
