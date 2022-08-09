@@ -49,7 +49,7 @@ proc scale(x, y: float32): Matrix3 =
 proc inverse(m: Matrix3): Matrix3 =
   cast[Matrix3](inverse(cast[Mat3](m)))
 
-proc parseColor(s: string): Color {.raises: [PixieError]} =
+proc parseColor(s: string): Color {.raises: [PixieError].} =
   try:
     result = parseHtmlColor(s)
   except:
@@ -216,10 +216,7 @@ proc pixie_image_write_file*(image: Image, file_path: cstring) {.raises: [], cde
     lastError = e
 
 proc pixie_image_copy*(image: Image): Image {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    result = copy(image)
-  except PixieError as e:
-    lastError = e
+  copy(image)
 
 proc pixie_image_get_color*(image: Image, x: int, y: int): Color {.raises: [], cdecl, exportc, dynlib.} =
   getColor(image, x, y)
@@ -230,15 +227,42 @@ proc pixie_image_set_color*(image: Image, x: int, y: int, color: Color) {.raises
 proc pixie_image_fill*(image: Image, color: Color) {.raises: [], cdecl, exportc, dynlib.} =
   fill(image, color)
 
+proc pixie_image_paint_fill*(image: Image, paint: Paint) {.raises: [], cdecl, exportc, dynlib.} =
+  try:
+    fill(image, paint)
+  except PixieError as e:
+    lastError = e
+
+proc pixie_image_is_one_color*(image: Image): bool {.raises: [], cdecl, exportc, dynlib.} =
+  isOneColor(image)
+
+proc pixie_image_is_transparent*(image: Image): bool {.raises: [], cdecl, exportc, dynlib.} =
+  isTransparent(image)
+
+proc pixie_image_is_opaque*(image: Image): bool {.raises: [], cdecl, exportc, dynlib.} =
+  isOpaque(image)
+
 proc pixie_image_flip_horizontal*(image: Image) {.raises: [], cdecl, exportc, dynlib.} =
   flipHorizontal(image)
 
 proc pixie_image_flip_vertical*(image: Image) {.raises: [], cdecl, exportc, dynlib.} =
   flipVertical(image)
 
+proc pixie_image_rotate90*(image: Image) {.raises: [], cdecl, exportc, dynlib.} =
+  try:
+    rotate90(image)
+  except PixieError as e:
+    lastError = e
+
 proc pixie_image_sub_image*(image: Image, x: int, y: int, w: int, h: int): Image {.raises: [], cdecl, exportc, dynlib.} =
   try:
     result = subImage(image, x, y, w, h)
+  except PixieError as e:
+    lastError = e
+
+proc pixie_image_rect_sub_image*(image: Image, rect: Rect): Image {.raises: [], cdecl, exportc, dynlib.} =
+  try:
+    result = subImage(image, rect)
   except PixieError as e:
     lastError = e
 
@@ -254,21 +278,18 @@ proc pixie_image_magnify_by2*(image: Image, power: int): Image {.raises: [], cde
   except PixieError as e:
     lastError = e
 
-proc pixie_image_apply_opacity*(target: Image, opacity: float32) {.raises: [], cdecl, exportc, dynlib.} =
-  applyOpacity(target, opacity)
+proc pixie_image_apply_opacity*(image: Image, opacity: float32) {.raises: [], cdecl, exportc, dynlib.} =
+  applyOpacity(image, opacity)
 
 proc pixie_image_invert*(image: Image) {.raises: [], cdecl, exportc, dynlib.} =
   invert(image)
 
+proc pixie_image_ceil*(image: Image) {.raises: [], cdecl, exportc, dynlib.} =
+  ceil(image)
+
 proc pixie_image_blur*(image: Image, radius: float32, out_of_bounds: Color) {.raises: [], cdecl, exportc, dynlib.} =
   try:
     blur(image, radius, out_of_bounds)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_image_new_mask*(image: Image): Mask {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    result = newMask(image)
   except PixieError as e:
     lastError = e
 
@@ -293,12 +314,6 @@ proc pixie_image_super_image*(image: Image, x: int, y: int, w: int, h: int): Ima
 proc pixie_image_draw*(a: Image, b: Image, transform: Mat3, blend_mode: BlendMode) {.raises: [], cdecl, exportc, dynlib.} =
   try:
     draw(a, b, transform, blend_mode)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_image_mask_draw*(image: Image, mask: Mask, transform: Mat3, blend_mode: BlendMode) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    draw(image, mask, transform, blend_mode)
   except PixieError as e:
     lastError = e
 
@@ -347,140 +362,8 @@ proc pixie_image_stroke_path*(image: Image, path: Path, paint: Paint, transform:
 proc pixie_image_new_context*(image: Image): Context {.raises: [], cdecl, exportc, dynlib.} =
   newContext(image)
 
-proc pixie_mask_unref*(x: Mask) {.raises: [], cdecl, exportc, dynlib.} =
-  GC_unref(x)
-
-proc pixie_new_mask*(width: int, height: int): Mask {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    result = newMask(width, height)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_get_width*(mask: Mask): int {.raises: [], cdecl, exportc, dynlib.} =
-  mask.width
-
-proc pixie_mask_set_width*(mask: Mask, width: int) {.raises: [], cdecl, exportc, dynlib.} =
-  mask.width = width
-
-proc pixie_mask_get_height*(mask: Mask): int {.raises: [], cdecl, exportc, dynlib.} =
-  mask.height
-
-proc pixie_mask_set_height*(mask: Mask, height: int) {.raises: [], cdecl, exportc, dynlib.} =
-  mask.height = height
-
-proc pixie_mask_write_file*(mask: Mask, file_path: cstring) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    writeFile(mask, file_path.`$`)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_copy*(mask: Mask): Mask {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    result = copy(mask)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_get_value*(mask: Mask, x: int, y: int): uint8 {.raises: [], cdecl, exportc, dynlib.} =
-  getValue(mask, x, y)
-
-proc pixie_mask_set_value*(mask: Mask, x: int, y: int, value: uint8) {.raises: [], cdecl, exportc, dynlib.} =
-  setValue(mask, x, y, value)
-
-proc pixie_mask_fill*(mask: Mask, value: uint8) {.raises: [], cdecl, exportc, dynlib.} =
-  fill(mask, value)
-
-proc pixie_mask_minify_by2*(mask: Mask, power: int): Mask {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    result = minifyBy2(mask, power)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_magnify_by2*(mask: Mask, power: int): Mask {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    result = magnifyBy2(mask, power)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_spread*(mask: Mask, spread: float32) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    spread(mask, spread)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_ceil*(mask: Mask) {.raises: [], cdecl, exportc, dynlib.} =
-  ceil(mask)
-
-proc pixie_mask_new_image*(mask: Mask): Image {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    result = newImage(mask)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_apply_opacity*(target: Mask, opacity: float32) {.raises: [], cdecl, exportc, dynlib.} =
-  applyOpacity(target, opacity)
-
-proc pixie_mask_invert*(mask: Mask) {.raises: [], cdecl, exportc, dynlib.} =
-  invert(mask)
-
-proc pixie_mask_blur*(mask: Mask, radius: float32, out_of_bounds: uint8) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    blur(mask, radius, out_of_bounds)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_resize*(src_mask: Mask, width: int, height: int): Mask {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    result = resize(src_mask, width, height)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_draw*(a: Mask, b: Mask, transform: Mat3, blend_mode: BlendMode) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    draw(a, b, transform, blend_mode)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_image_draw*(mask: Mask, image: Image, transform: Mat3, blend_mode: BlendMode) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    draw(mask, image, transform, blend_mode)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_fill_text*(target: Mask, font: Font, text: cstring, transform: Mat3, bounds: Vec2, h_align: HorizontalAlignment, v_align: VerticalAlignment) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    fillText(target, font, text.`$`, transform, bounds, h_align, v_align)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_arrangement_fill_text*(target: Mask, arrangement: Arrangement, transform: Mat3) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    fillText(target, arrangement, transform)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_stroke_text*(target: Mask, font: Font, text: cstring, transform: Mat3, stroke_width: float32, bounds: Vec2, h_align: HorizontalAlignment, v_align: VerticalAlignment, line_cap: LineCap, line_join: LineJoin, miter_limit: float32, dashes: SeqFloat32) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    strokeText(target, font, text.`$`, transform, stroke_width, bounds, h_align, v_align, line_cap, line_join, miter_limit, dashes.s)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_arrangement_stroke_text*(target: Mask, arrangement: Arrangement, transform: Mat3, stroke_width: float32, line_cap: LineCap, line_join: LineJoin, miter_limit: float32, dashes: SeqFloat32) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    strokeText(target, arrangement, transform, stroke_width, line_cap, line_join, miter_limit, dashes.s)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_fill_path*(mask: Mask, path: Path, transform: Mat3, winding_rule: WindingRule, blend_mode: BlendMode) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    fillPath(mask, path, transform, winding_rule, blend_mode)
-  except PixieError as e:
-    lastError = e
-
-proc pixie_mask_stroke_path*(mask: Mask, path: Path, transform: Mat3, stroke_width: float32, line_cap: LineCap, line_join: LineJoin, miter_limit: float32, dashes: SeqFloat32, blend_mode: BlendMode) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    strokePath(mask, path, transform, stroke_width, line_cap, line_join, miter_limit, dashes.s, blend_mode)
-  except PixieError as e:
-    lastError = e
+proc pixie_image_opaque_bounds*(image: Image): Rect {.raises: [], cdecl, exportc, dynlib.} =
+  opaqueBounds(image)
 
 proc pixie_paint_unref*(x: Paint) {.raises: [], cdecl, exportc, dynlib.} =
   GC_unref(x)
@@ -560,14 +443,17 @@ proc pixie_paint_gradient_stops_delete*(paint: Paint, i: int) {.raises: [], cdec
 proc pixie_paint_gradient_stops_clear*(paint: Paint) {.raises: [], cdecl, exportc, dynlib.} =
   paint.gradientStops.setLen(0)
 
-proc pixie_paint_new_paint*(paint: Paint): Paint {.raises: [], cdecl, exportc, dynlib.} =
-  newPaint(paint)
+proc pixie_paint_copy*(paint: Paint): Paint {.raises: [], cdecl, exportc, dynlib.} =
+  copy(paint)
 
 proc pixie_path_unref*(x: Path) {.raises: [], cdecl, exportc, dynlib.} =
   GC_unref(x)
 
 proc pixie_new_path*(): Path {.raises: [], cdecl, exportc, dynlib.} =
   newPath()
+
+proc pixie_path_copy*(path: Path): Path {.raises: [], cdecl, exportc, dynlib.} =
+  copy(path)
 
 proc pixie_path_transform*(path: Path, mat: Mat3) {.raises: [], cdecl, exportc, dynlib.} =
   transform(path, mat)
@@ -749,6 +635,9 @@ proc pixie_font_get_no_kerning_adjustments*(font: Font): bool {.raises: [], cdec
 proc pixie_font_set_no_kerning_adjustments*(font: Font, noKerningAdjustments: bool) {.raises: [], cdecl, exportc, dynlib.} =
   font.noKerningAdjustments = noKerningAdjustments
 
+proc pixie_font_copy*(font: Font): Font {.raises: [], cdecl, exportc, dynlib.} =
+  copy(font)
+
 proc pixie_font_scale*(font: Font): float32 {.raises: [], cdecl, exportc, dynlib.} =
   scale(font)
 
@@ -867,10 +756,7 @@ proc pixie_context_set_text_align*(context: Context, textAlign: HorizontalAlignm
   context.textAlign = textAlign
 
 proc pixie_context_save*(ctx: Context) {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    save(ctx)
-  except PixieError as e:
-    lastError = e
+  save(ctx)
 
 proc pixie_context_save_layer*(ctx: Context) {.raises: [], cdecl, exportc, dynlib.} =
   try:
@@ -1103,12 +989,6 @@ proc pixie_read_image_dimensions*(file_path: cstring): ImageDimensions {.raises:
   except PixieError as e:
     lastError = e
 
-proc pixie_read_mask*(file_path: cstring): Mask {.raises: [], cdecl, exportc, dynlib.} =
-  try:
-    result = readMask(file_path.`$`)
-  except PixieError as e:
-    lastError = e
-
 proc pixie_read_typeface*(file_path: cstring): Typeface {.raises: [], cdecl, exportc, dynlib.} =
   try:
     result = readTypeface(file_path.`$`)
@@ -1150,3 +1030,10 @@ proc pixie_scale*(x: float32, y: float32): Matrix3 {.raises: [], cdecl, exportc,
 
 proc pixie_inverse*(m: Matrix3): Matrix3 {.raises: [], cdecl, exportc, dynlib.} =
   inverse(m)
+
+proc pixie_snap_to_pixels*(rect: Rect): Rect {.raises: [], cdecl, exportc, dynlib.} =
+  snapToPixels(rect)
+
+proc pixie_mix*(a: Color, b: Color, v: float32): Color {.raises: [], cdecl, exportc, dynlib.} =
+  mix(a, b, v)
+
