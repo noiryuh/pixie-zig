@@ -50,6 +50,10 @@ const examples = [_]Example{
         .name = "square",
         .path = root_path ++ "/example/square.zig",
     },
+    Example{
+        .name = "gradient_heart",
+        .path = root_path ++ "/example/gradient_heart.zig",
+    },
 };
 
 // ========================================
