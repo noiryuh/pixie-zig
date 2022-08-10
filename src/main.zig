@@ -90,16 +90,6 @@ pub inline fn takeError() [:0]const u8 {
     return std.mem.span(pixie_take_error());
 }
 
-extern fn pixie_miter_limit_to_angle(limit: f32) callconv(.C) f32;
-pub inline fn miterLimitToAngle(limit: f32) f32 {
-    return pixie_miter_limit_to_angle(limit);
-}
-
-extern fn pixie_angle_to_miter_limit(angle: f32) callconv(.C) f32;
-pub inline fn angleToMiterLimit(angle: f32) f32 {
-    return pixie_angle_to_miter_limit(angle);
-}
-
 pub const Vector2 = extern struct {
     x: f32,
     y: f32,
@@ -143,9 +133,9 @@ pub const Matrix3 = extern struct {
         return pixie_scale(x, y);
     }
 
-    extern fn pixie_inverse(matrix: Matrix3) callconv(.C) Matrix3;
-    pub inline fn inverse(matrix: Matrix3) Matrix3 {
-        return pixie_inverse(matrix);
+    extern fn pixie_inverse(m: Matrix3) callconv(.C) Matrix3;
+    pub inline fn inverse(m: Matrix3) Matrix3 {
+        return pixie_inverse(m);
     }
 };
 
@@ -183,6 +173,7 @@ pub const Color = extern struct {
     }
 
     extern fn pixie_mix(a: Color, b: Color, v: f32) callconv(.C) Color;
+    /// Mixes two Color colors together using simple lerp.
     pub inline fn mix(a: Color, b: Color, v: f32) Color {
         return pixie_mix(a, b, v);
     }
@@ -216,15 +207,15 @@ pub const ImageDimensions = extern struct {
         return pixie_image_dimensions_eq(self, other);
     }
 
-    extern fn pixie_read_image_dimensions(file_path: [*:0]const u8) callconv(.C) ImageDimensions;
-    /// Loads an image's dimensions from a file.
-    pub inline fn readFromImage(file_path: [:0]const u8) ImageDimensions {
+    extern fn pixie_read_image_dimensions(path: [*:0]const u8) callconv(.C) ImageDimensions;
+    /// Decodes an image's dimensions from a file.
+    pub inline fn loadFromFile(file_path: [:0]const u8) ImageDimensions {
         return pixie_read_image_dimensions(file_path.ptr);
     }
 
     extern fn pixie_decode_image_dimensions(data: [*:0]const u8) callconv(.C) ImageDimensions;
-    /// Loads an image's dimensions from memory.
-    pub inline fn readFromMemory(data: [:0]const u8) ImageDimensions {
+    /// Decodes an image's dimensions from memory.
+    pub inline fn loadFromMemory(data: [:0]const u8) ImageDimensions {
         return pixie_decode_image_dimensions(data.ptr);
     }
 };
@@ -255,14 +246,14 @@ pub const SeqFloat32 = opaque {
         return pixie_seq_float32_set(self, index, value);
     }
 
-    extern fn pixie_seq_float32_delete(self: *SeqFloat32, index: isize) callconv(.C) void;
-    pub inline fn orderedRemove(self: *SeqFloat32, index: isize) void {
-        return pixie_seq_float32_delete(self, index);
-    }
-
     extern fn pixie_seq_float32_add(self: *SeqFloat32, value: f32) callconv(.C) void;
     pub inline fn append(self: *SeqFloat32, value: f32) void {
         return pixie_seq_float32_add(self, value);
+    }
+
+    extern fn pixie_seq_float32_add(self: *SeqFloat32, index: isize) callconv(.C) void;
+    pub inline fn orderedRemove(self: *SeqFloat32, index: isize) void {
+        return pixie_seq_float32_add(self, index);
     }
 
     extern fn pixie_seq_float32_clear(self: *SeqFloat32) callconv(.C) void;
@@ -297,14 +288,14 @@ pub const SeqSpan = opaque {
         return pixie_seq_span_set(self, index, value);
     }
 
-    extern fn pixie_seq_span_delete(self: *SeqSpan, index: isize) callconv(.C) void;
-    pub inline fn orderedRemove(self: *SeqSpan, index: isize) void {
-        return pixie_seq_span_delete(self, index);
-    }
-
     extern fn pixie_seq_span_add(self: *SeqSpan, value: *Span) callconv(.C) void;
     pub inline fn append(self: *SeqSpan, value: *Span) void {
         return pixie_seq_span_add(self, value);
+    }
+
+    extern fn pixie_seq_span_add(self: *SeqSpan, index: isize) callconv(.C) void;
+    pub inline fn orderedRemove(self: *SeqSpan, index: isize) void {
+        return pixie_seq_span_add(self, index);
     }
 
     extern fn pixie_seq_span_clear(self: *SeqSpan) callconv(.C) void;
@@ -314,11 +305,11 @@ pub const SeqSpan = opaque {
 
     extern fn pixie_seq_span_typeset(self: *SeqSpan, bounds: Vector2, h_align: HorizontalAlignment, v_align: VerticalAlignment, wrap: bool) callconv(.C) *Arrangement;
     /// Lays out the character glyphs and returns the arrangement.
-    /// Optional parameters:
-    /// bounds: width determines wrapping and hAlign, height for vAlign
-    /// hAlign: horizontal alignment of the text
-    /// vAlign: vertical alignment of the text
-    /// wrap: enable/disable text wrapping
+    /// Optional parameters
+    /// Width determines wrapping and hAlign, height for vAlign
+    /// Horizontal alignment of the text
+    /// Vertical alignment of the text
+    /// Enable/disable text wrapping
     pub inline fn typeset(self: *SeqSpan, bounds: Vector2, h_align: HorizontalAlignment, v_align: VerticalAlignment, wrap: bool) *Arrangement {
         return pixie_seq_span_typeset(self, bounds, h_align, v_align, wrap);
     }
@@ -347,9 +338,9 @@ pub const Image = opaque {
         return pixie_image_get_width(self);
     }
 
-    extern fn pixie_image_set_width(self: *Image, width: isize) callconv(.C) void;
-    pub inline fn setWidth(self: *Image, width: isize) void {
-        return pixie_image_set_width(self, width);
+    extern fn pixie_image_set_width(self: *Image, value: isize) callconv(.C) void;
+    pub inline fn setWidth(self: *Image, value: isize) void {
+        return pixie_image_set_width(self, value);
     }
 
     extern fn pixie_image_get_height(self: *Image) callconv(.C) isize;
@@ -357,27 +348,27 @@ pub const Image = opaque {
         return pixie_image_get_height(self);
     }
 
-    extern fn pixie_image_set_height(self: *Image, height: isize) callconv(.C) void;
-    pub inline fn setHeight(self: *Image, height: isize) void {
-        return pixie_image_set_height(self, height);
-    }
-
-    extern fn pixie_read_image(file_path: [*:0]const u8) callconv(.C) *Image;
-    /// Loads an image from a file.
-    pub inline fn readFromFile(file_path: [:0]const u8) *Image {
-        return pixie_read_image(file_path.ptr);
-    }
-
-    extern fn pixie_decode_image(data: [*:0]const u8) callconv(.C) *Image;
-    /// Loads an image from memory.
-    pub inline fn readFromMemory(data: [:0]const u8) *Image {
-        return pixie_decode_image(data.ptr);
+    extern fn pixie_image_set_height(self: *Image, value: isize) callconv(.C) void;
+    pub inline fn setHeight(self: *Image, value: isize) void {
+        return pixie_image_set_height(self, value);
     }
 
     extern fn pixie_image_write_file(self: *Image, file_path: [*:0]const u8) callconv(.C) void;
     /// Writes an image to a file.
-    pub inline fn writeToFile(self: *Image, file_path: [:0]const u8) void {
+    pub inline fn writeFile(self: *Image, file_path: [:0]const u8) void {
         return pixie_image_write_file(self, file_path.ptr);
+    }
+
+    extern fn pixie_decode_image(data: [*:0]const u8) callconv(.C) *Image;
+    /// Loads an image from memory.
+    pub inline fn loadFromMemory(data: [:0]const u8) *Image {
+        return pixie_decode_image(data.ptr);
+    }
+
+    extern fn pixie_read_image(file_path: [*:0]const u8) callconv(.C) *Image;
+    /// Loads an image from a file.
+    pub inline fn loadFromFile(file_path: [:0]const u8) *Image {
+        return pixie_read_image(file_path.ptr);
     }
 
     extern fn pixie_image_copy(self: *Image) callconv(.C) *Image;
@@ -406,7 +397,7 @@ pub const Image = opaque {
 
     extern fn pixie_image_paint_fill(self: *Image, paint: *Paint) callconv(.C) void;
     /// Fills the image with the paint.
-    pub inline fn paintFill(self: *Image, paint: *Paint) void {
+    pub inline fn fillPaint(self: *Image, paint: *Paint) void {
         return pixie_image_paint_fill(self, paint);
     }
 
@@ -455,7 +446,7 @@ pub const Image = opaque {
     extern fn pixie_image_rect_sub_image(self: *Image, rect: Rect) callconv(.C) *Image;
     /// Gets a sub image from this image via rectangle.
     /// Rectangle is snapped/expanded to whole pixels first.
-    pub inline fn rectSubImage(self: *Image, rect: Rect) *Image {
+    pub inline fn subImageRect(self: *Image, rect: Rect) *Image {
         return pixie_image_rect_sub_image(self, rect);
     }
 
@@ -537,7 +528,7 @@ pub const Image = opaque {
 
     extern fn pixie_image_arrangement_fill_text(self: *Image, arrangement: *Arrangement, transform_value: Matrix3) callconv(.C) void;
     /// Fills the text arrangement.
-    pub inline fn arrangementFillText(self: *Image, arrangement: *Arrangement, transform_value: Matrix3) void {
+    pub inline fn fillTextArrangement(self: *Image, arrangement: *Arrangement, transform_value: Matrix3) void {
         return pixie_image_arrangement_fill_text(self, arrangement, transform_value);
     }
 
@@ -555,7 +546,7 @@ pub const Image = opaque {
 
     extern fn pixie_image_arrangement_stroke_text(self: *Image, arrangement: *Arrangement, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) callconv(.C) void;
     /// Strokes the text arrangement.
-    pub inline fn arrangementStrokeText(self: *Image, arrangement: *Arrangement, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) void {
+    pub inline fn strokeTextArrangement(self: *Image, arrangement: *Arrangement, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) void {
         return pixie_image_arrangement_stroke_text(self, arrangement, transform_value, stroke_width, line_cap, line_join, miter_limit, dashes);
     }
 
@@ -600,24 +591,64 @@ pub const Paint = opaque {
         return pixie_new_paint(kind);
     }
 
-    extern fn pixie_paint_get_kind(self: *Image) callconv(.C) PaintKind;
-    pub inline fn getKind(self: *Image) PaintKind {
+    extern fn pixie_paint_get_kind(self: *Paint) callconv(.C) PaintKind;
+    pub inline fn getKind(self: *Paint) PaintKind {
         return pixie_paint_get_kind(self);
     }
 
-    extern fn pixie_paint_set_kind(self: *Image, kind: PaintKind) callconv(.C) void;
-    pub inline fn setKind(self: *Image, kind: PaintKind) void {
-        return pixie_paint_set_kind(self, kind);
+    extern fn pixie_paint_set_kind(self: *Paint, value: PaintKind) callconv(.C) void;
+    pub inline fn setKind(self: *Paint, value: PaintKind) void {
+        return pixie_paint_set_kind(self, value);
     }
 
-    extern fn pixie_paint_get_blend_mode(self: *Image) callconv(.C) BlendMode;
-    pub inline fn getBlendMode(self: *Image) BlendMode {
+    extern fn pixie_paint_get_blend_mode(self: *Paint) callconv(.C) BlendMode;
+    pub inline fn getBlendMode(self: *Paint) BlendMode {
         return pixie_paint_get_blend_mode(self);
     }
 
-    extern fn pixie_paint_set_blend_mode(self: *Image, blend_mode: BlendMode) callconv(.C) void;
-    pub inline fn setBlendMode(self: *Image, blend_mode: BlendMode) void {
-        return pixie_paint_set_blend_mode(self, blend_mode);
+    extern fn pixie_paint_set_blend_mode(self: *Paint, value: BlendMode) callconv(.C) void;
+    pub inline fn setBlendMode(self: *Paint, value: BlendMode) void {
+        return pixie_paint_set_blend_mode(self, value);
+    }
+
+    extern fn pixie_paint_get_opacity(self: *Paint) callconv(.C) f32;
+    pub inline fn getOpacity(self: *Paint) f32 {
+        return pixie_paint_get_opacity(self);
+    }
+
+    extern fn pixie_paint_set_opacity(self: *Paint, value: f32) callconv(.C) void;
+    pub inline fn setOpacity(self: *Paint, value: f32) void {
+        return pixie_paint_set_opacity(self, value);
+    }
+
+    extern fn pixie_paint_get_color(self: *Paint) callconv(.C) Color;
+    pub inline fn getColor(self: *Paint) Color {
+        return pixie_paint_get_color(self);
+    }
+
+    extern fn pixie_paint_set_color(self: *Paint, value: Color) callconv(.C) void;
+    pub inline fn setColor(self: *Paint, value: Color) void {
+        return pixie_paint_set_color(self, value);
+    }
+
+    extern fn pixie_paint_get_image(self: *Paint) callconv(.C) *Image;
+    pub inline fn getImage(self: *Paint) *Image {
+        return pixie_paint_get_image(self);
+    }
+
+    extern fn pixie_paint_set_image(self: *Paint, value: *Image) callconv(.C) void;
+    pub inline fn setImage(self: *Paint, value: *Image) void {
+        return pixie_paint_set_image(self, value);
+    }
+
+    extern fn pixie_paint_get_image_mat(self: *Paint) callconv(.C) Matrix3;
+    pub inline fn getImageMat(self: *Paint) Matrix3 {
+        return pixie_paint_get_image_mat(self);
+    }
+
+    extern fn pixie_paint_set_image_mat(self: *Paint, value: Matrix3) callconv(.C) void;
+    pub inline fn setImageMat(self: *Paint, value: Matrix3) void {
+        return pixie_paint_set_image_mat(self, value);
     }
 
     extern fn pixie_paint_copy(self: *Paint) callconv(.C) *Paint;
@@ -637,12 +668,6 @@ pub const Path = opaque {
     /// Create a new Path.
     pub inline fn init() *Path {
         return pixie_new_path();
-    }
-
-    extern fn pixie_parse_path(path: [*:0]const u8) callconv(.C) *Path;
-    /// Converts a SVG style path string into seq of commands.
-    pub inline fn parseFromString(s: [:0]const u8) *Path {
-        return pixie_parse_path(s.ptr);
     }
 
     extern fn pixie_path_copy(self: *Path) callconv(.C) *Path;
@@ -783,9 +808,19 @@ pub const Typeface = opaque {
         return pixie_typeface_unref(self);
     }
 
+    extern fn pixie_typeface_get_file_path(self: *Typeface) callconv(.C) [*:0]const u8;
+    pub inline fn getFilePath(self: *Typeface) [:0]const u8 {
+        return std.mem.span(pixie_typeface_get_file_path(self));
+    }
+
+    extern fn pixie_typeface_set_file_path(self: *Typeface, value: [*:0]const u8) callconv(.C) void;
+    pub inline fn setFilePath(self: *Typeface, value: [:0]const u8) void {
+        return pixie_typeface_set_file_path(self, value.ptr);
+    }
+
     extern fn pixie_read_typeface(file_path: [*:0]const u8) callconv(.C) *Typeface;
     /// Loads a typeface from a file.
-    pub inline fn readFromFile(file_path: [:0]const u8) *Typeface {
+    pub inline fn loadFromFile(file_path: [:0]const u8) *Typeface {
         return pixie_read_typeface(file_path.ptr);
     }
 
@@ -813,27 +848,27 @@ pub const Typeface = opaque {
         return pixie_typeface_line_height(self);
     }
 
-    extern fn pixie_typeface_has_glyph(self: *Typeface, rune: i32) callconv(.C) bool;
+    extern fn pixie_typeface_has_glyph(self: *Typeface, rune: u21) callconv(.C) bool;
     /// Returns if there is a glyph for this rune.
-    pub inline fn hasGlyph(self: *Typeface, rune: i32) bool {
+    pub inline fn hasGlyph(self: *Typeface, rune: u21) bool {
         return pixie_typeface_has_glyph(self, rune);
     }
 
-    extern fn pixie_typeface_get_glyph_path(self: *Typeface, rune: i32) callconv(.C) *Path;
+    extern fn pixie_typeface_get_glyph_path(self: *Typeface, rune: u21) callconv(.C) *Path;
     /// The glyph path for the rune.
-    pub inline fn getGlyphPath(self: *Typeface, rune: i32) *Path {
+    pub inline fn getGlyphPath(self: *Typeface, rune: u21) *Path {
         return pixie_typeface_get_glyph_path(self, rune);
     }
 
-    extern fn pixie_typeface_get_advance(self: *Typeface, rune: i32) callconv(.C) f32;
+    extern fn pixie_typeface_get_advance(self: *Typeface, rune: u21) callconv(.C) f32;
     /// The advance for the rune in pixels.
-    pub inline fn getAdvance(self: *Typeface, rune: i32) f32 {
+    pub inline fn getAdvance(self: *Typeface, rune: u21) f32 {
         return pixie_typeface_get_advance(self, rune);
     }
 
-    extern fn pixie_typeface_get_kerning_adjustment(self: *Typeface, left: i32, right: i32) callconv(.C) f32;
+    extern fn pixie_typeface_get_kerning_adjustment(self: *Typeface, left: u21, right: u21) callconv(.C) f32;
     /// The kerning adjustment for the rune pair, in pixels.
-    pub inline fn getKerningAdjustment(self: *Typeface, left: i32, right: i32) f32 {
+    pub inline fn getKerningAdjustment(self: *Typeface, left: u21, right: u21) f32 {
         return pixie_typeface_get_kerning_adjustment(self, left, right);
     }
 
@@ -849,10 +884,96 @@ pub const Font = opaque {
         return pixie_font_unref(self);
     }
 
+    extern fn pixie_font_get_typeface(self: *Font) callconv(.C) *Typeface;
+    pub inline fn getTypeface(self: *Font) *Typeface {
+        return pixie_font_get_typeface(self);
+    }
+
+    extern fn pixie_font_set_typeface(self: *Font, value: *Typeface) callconv(.C) void;
+    pub inline fn setTypeface(self: *Font, value: *Typeface) void {
+        return pixie_font_set_typeface(self, value);
+    }
+
+    extern fn pixie_font_get_size(self: *Font) callconv(.C) f32;
+    pub inline fn getSize(self: *Font) f32 {
+        return pixie_font_get_size(self);
+    }
+
+    extern fn pixie_font_set_size(self: *Font, value: f32) callconv(.C) void;
+    pub inline fn setSize(self: *Font, value: f32) void {
+        return pixie_font_set_size(self, value);
+    }
+
+    extern fn pixie_font_get_line_height(self: *Font) callconv(.C) f32;
+    pub inline fn getLineHeight(self: *Font) f32 {
+        return pixie_font_get_line_height(self);
+    }
+
+    extern fn pixie_font_set_line_height(self: *Font, value: f32) callconv(.C) void;
+    pub inline fn setLineHeight(self: *Font, value: f32) void {
+        return pixie_font_set_line_height(self, value);
+    }
+
+    extern fn pixie_font_get_paint(self: *Font) callconv(.C) *Paint;
+    pub inline fn getPaint(self: *Font) *Paint {
+        return pixie_font_get_paint(self);
+    }
+
+    extern fn pixie_font_set_paint(self: *Font, value: *Paint) callconv(.C) void;
+    pub inline fn setPaint(self: *Font, value: *Paint) void {
+        return pixie_font_set_paint(self, value);
+    }
+
+    extern fn pixie_font_get_text_case(self: *Font) callconv(.C) TextCase;
+    pub inline fn getTextCase(self: *Font) TextCase {
+        return pixie_font_get_text_case(self);
+    }
+
+    extern fn pixie_font_set_text_case(self: *Font, value: TextCase) callconv(.C) void;
+    pub inline fn setTextCase(self: *Font, value: TextCase) void {
+        return pixie_font_set_text_case(self, value);
+    }
+
+    extern fn pixie_font_get_underline(self: *Font) callconv(.C) bool;
+    pub inline fn getUnderline(self: *Font) bool {
+        return pixie_font_get_underline(self);
+    }
+
+    extern fn pixie_font_set_underline(self: *Font, value: bool) callconv(.C) void;
+    pub inline fn setUnderline(self: *Font, value: bool) void {
+        return pixie_font_set_underline(self, value);
+    }
+
+    extern fn pixie_font_get_strikethrough(self: *Font) callconv(.C) bool;
+    pub inline fn getStrikethrough(self: *Font) bool {
+        return pixie_font_get_strikethrough(self);
+    }
+
+    extern fn pixie_font_set_strikethrough(self: *Font, value: bool) callconv(.C) void;
+    pub inline fn setStrikethrough(self: *Font, value: bool) void {
+        return pixie_font_set_strikethrough(self, value);
+    }
+
+    extern fn pixie_font_get_no_kerning_adjustments(self: *Font) callconv(.C) bool;
+    pub inline fn getNoKerningAdjustments(self: *Font) bool {
+        return pixie_font_get_no_kerning_adjustments(self);
+    }
+
+    extern fn pixie_font_set_no_kerning_adjustments(self: *Font, value: bool) callconv(.C) void;
+    pub inline fn setNoKerningAdjustments(self: *Font, value: bool) void {
+        return pixie_font_set_no_kerning_adjustments(self, value);
+    }
+
     extern fn pixie_read_font(file_path: [*:0]const u8) callconv(.C) *Font;
     /// Loads a font from a file.
-    pub inline fn readFromFile(file_path: [:0]const u8) *Font {
+    pub inline fn loadFromFile(file_path: [:0]const u8) *Font {
         return pixie_read_font(file_path.ptr);
+    }
+
+    extern fn pixie_parse_path(s: [*:0]const u8) callconv(.C) *Path;
+    /// Converts a SVG style path string into seq of commands.
+    pub inline fn parseFromString(s: [:0]const u8) *Path {
+        return pixie_parse_path(s.ptr);
     }
 
     extern fn pixie_font_copy(self: *Font) callconv(.C) *Font;
@@ -901,6 +1022,26 @@ pub const Span = opaque {
     pub inline fn init(text: [:0]const u8, font: *Font) *Span {
         return pixie_new_span(text.ptr, font);
     }
+
+    extern fn pixie_span_get_text(self: *Span) callconv(.C) [*:0]const u8;
+    pub inline fn getText(self: *Span) [:0]const u8 {
+        return std.mem.span(pixie_span_get_text(self));
+    }
+
+    extern fn pixie_span_set_text(self: *Span, value: [*:0]const u8) callconv(.C) void;
+    pub inline fn setText(self: *Span, value: [:0]const u8) void {
+        return pixie_span_set_text(self, value.ptr);
+    }
+
+    extern fn pixie_span_get_font(self: *Span) callconv(.C) *Font;
+    pub inline fn getFont(self: *Span) *Font {
+        return pixie_span_get_font(self);
+    }
+
+    extern fn pixie_span_set_font(self: *Span, value: *Font) callconv(.C) void;
+    pub inline fn setFont(self: *Span, value: *Font) void {
+        return pixie_span_set_font(self, value);
+    }
 };
 
 pub const Arrangement = opaque {
@@ -931,6 +1072,116 @@ pub const Context = opaque {
     /// Create a new Context that will draw to a new image of width and height.
     pub inline fn init(width: isize, height: isize) *Context {
         return pixie_new_context(width, height);
+    }
+
+    extern fn pixie_context_get_image(self: *Context) callconv(.C) *Image;
+    pub inline fn getImage(self: *Context) *Image {
+        return pixie_context_get_image(self);
+    }
+
+    extern fn pixie_context_set_image(self: *Context, value: *Image) callconv(.C) void;
+    pub inline fn setImage(self: *Context, value: *Image) void {
+        return pixie_context_set_image(self, value);
+    }
+
+    extern fn pixie_context_get_fill_style(self: *Context) callconv(.C) *Paint;
+    pub inline fn getFillStyle(self: *Context) *Paint {
+        return pixie_context_get_fill_style(self);
+    }
+
+    extern fn pixie_context_set_fill_style(self: *Context, value: *Paint) callconv(.C) void;
+    pub inline fn setFillStyle(self: *Context, value: *Paint) void {
+        return pixie_context_set_fill_style(self, value);
+    }
+
+    extern fn pixie_context_get_stroke_style(self: *Context) callconv(.C) *Paint;
+    pub inline fn getStrokeStyle(self: *Context) *Paint {
+        return pixie_context_get_stroke_style(self);
+    }
+
+    extern fn pixie_context_set_stroke_style(self: *Context, value: *Paint) callconv(.C) void;
+    pub inline fn setStrokeStyle(self: *Context, value: *Paint) void {
+        return pixie_context_set_stroke_style(self, value);
+    }
+
+    extern fn pixie_context_get_global_alpha(self: *Context) callconv(.C) f32;
+    pub inline fn getGlobalAlpha(self: *Context) f32 {
+        return pixie_context_get_global_alpha(self);
+    }
+
+    extern fn pixie_context_set_global_alpha(self: *Context, value: f32) callconv(.C) void;
+    pub inline fn setGlobalAlpha(self: *Context, value: f32) void {
+        return pixie_context_set_global_alpha(self, value);
+    }
+
+    extern fn pixie_context_get_line_width(self: *Context) callconv(.C) f32;
+    pub inline fn getLineWidth(self: *Context) f32 {
+        return pixie_context_get_line_width(self);
+    }
+
+    extern fn pixie_context_set_line_width(self: *Context, value: f32) callconv(.C) void;
+    pub inline fn setLineWidth(self: *Context, value: f32) void {
+        return pixie_context_set_line_width(self, value);
+    }
+
+    extern fn pixie_context_get_miter_limit(self: *Context) callconv(.C) f32;
+    pub inline fn getMiterLimit(self: *Context) f32 {
+        return pixie_context_get_miter_limit(self);
+    }
+
+    extern fn pixie_context_set_miter_limit(self: *Context, value: f32) callconv(.C) void;
+    pub inline fn setMiterLimit(self: *Context, value: f32) void {
+        return pixie_context_set_miter_limit(self, value);
+    }
+
+    extern fn pixie_context_get_line_cap(self: *Context) callconv(.C) LineCap;
+    pub inline fn getLineCap(self: *Context) LineCap {
+        return pixie_context_get_line_cap(self);
+    }
+
+    extern fn pixie_context_set_line_cap(self: *Context, value: LineCap) callconv(.C) void;
+    pub inline fn setLineCap(self: *Context, value: LineCap) void {
+        return pixie_context_set_line_cap(self, value);
+    }
+
+    extern fn pixie_context_get_line_join(self: *Context) callconv(.C) LineJoin;
+    pub inline fn getLineJoin(self: *Context) LineJoin {
+        return pixie_context_get_line_join(self);
+    }
+
+    extern fn pixie_context_set_line_join(self: *Context, value: LineJoin) callconv(.C) void;
+    pub inline fn setLineJoin(self: *Context, value: LineJoin) void {
+        return pixie_context_set_line_join(self, value);
+    }
+
+    extern fn pixie_context_get_font(self: *Context) callconv(.C) [*:0]const u8;
+    pub inline fn getFont(self: *Context) [:0]const u8 {
+        return std.mem.span(pixie_context_get_font(self));
+    }
+
+    extern fn pixie_context_set_font(self: *Context, value: [*:0]const u8) callconv(.C) void;
+    pub inline fn setFont(self: *Context, value: [:0]const u8) void {
+        return pixie_context_set_font(self, value.ptr);
+    }
+
+    extern fn pixie_context_get_font_size(self: *Context) callconv(.C) f32;
+    pub inline fn getFontSize(self: *Context) f32 {
+        return pixie_context_get_font_size(self);
+    }
+
+    extern fn pixie_context_set_font_size(self: *Context, value: f32) callconv(.C) void;
+    pub inline fn setFontSize(self: *Context, value: f32) void {
+        return pixie_context_set_font_size(self, value);
+    }
+
+    extern fn pixie_context_get_text_align(self: *Context) callconv(.C) HorizontalAlignment;
+    pub inline fn getTextAlign(self: *Context) HorizontalAlignment {
+        return pixie_context_get_text_align(self);
+    }
+
+    extern fn pixie_context_set_text_align(self: *Context, value: HorizontalAlignment) callconv(.C) void;
+    pub inline fn setTextAlign(self: *Context, value: HorizontalAlignment) void {
+        return pixie_context_set_text_align(self, value);
     }
 
     extern fn pixie_context_save(self: *Context) callconv(.C) void;
@@ -978,7 +1229,7 @@ pub const Context = opaque {
 
     extern fn pixie_context_path_fill(self: *Context, path: *Path, winding_rule: WindingRule) callconv(.C) void;
     /// Fills the path with the current fillStyle.
-    pub inline fn pathFill(self: *Context, path: *Path, winding_rule: WindingRule) void {
+    pub inline fn fillPath(self: *Context, path: *Path, winding_rule: WindingRule) void {
         return pixie_context_path_fill(self, path, winding_rule);
     }
 
@@ -994,7 +1245,7 @@ pub const Context = opaque {
     /// Turns the path into the current clipping region. The previous clipping
     /// region, if any, is intersected with the current or given path to create
     /// the new clipping region.
-    pub inline fn pathClip(self: *Context, path: *Path, winding_rule: WindingRule) void {
+    pub inline fn clipPath(self: *Context, path: *Path, winding_rule: WindingRule) void {
         return pixie_context_path_clip(self, path, winding_rule);
     }
 
@@ -1006,7 +1257,7 @@ pub const Context = opaque {
 
     extern fn pixie_context_path_stroke(self: *Context, path: *Path) callconv(.C) void;
     /// Strokes (outlines) the current or given path with the current strokeStyle.
-    pub inline fn pathStroke(self: *Context, path: *Path) void {
+    pub inline fn strokePath(self: *Context, path: *Path) void {
         return pixie_context_path_stroke(self, path);
     }
 
@@ -1209,7 +1460,7 @@ pub const Context = opaque {
 
     extern fn pixie_context_path_is_point_in_path(self: *Context, path: *Path, x: f32, y: f32, winding_rule: WindingRule) callconv(.C) bool;
     /// Returns whether or not the specified point is contained in the current path.
-    pub inline fn pathIsPointInPath(self: *Context, path: *Path, x: f32, y: f32, winding_rule: WindingRule) bool {
+    pub inline fn isPointInPathPath(self: *Context, path: *Path, x: f32, y: f32, winding_rule: WindingRule) bool {
         return pixie_context_path_is_point_in_path(self, path, x, y, winding_rule);
     }
 
@@ -1223,11 +1474,19 @@ pub const Context = opaque {
     extern fn pixie_context_path_is_point_in_stroke(self: *Context, path: *Path, x: f32, y: f32) callconv(.C) bool;
     /// Returns whether or not the specified point is inside the area contained
     /// by the stroking of a path.
-    pub inline fn pathIsPointInStroke(self: *Context, path: *Path, x: f32, y: f32) bool {
+    pub inline fn isPointInStrokePath(self: *Context, path: *Path, x: f32, y: f32) bool {
         return pixie_context_path_is_point_in_stroke(self, path, x, y);
     }
 };
 
-test {
-    _ = std.testing.refAllDeclsRecursive(@This());
+extern fn pixie_miter_limit_to_angle(limit: f32) callconv(.C) f32;
+/// Converts miter-limit-ratio to miter-limit-angle.
+pub inline fn miterLimitToAngle(limit: f32) f32 {
+    return pixie_miter_limit_to_angle(limit);
+}
+
+extern fn pixie_angle_to_miter_limit(angle: f32) callconv(.C) f32;
+/// Converts miter-limit-angle to miter-limit-ratio.
+pub inline fn angleToMiterLimit(angle: f32) f32 {
+    return pixie_angle_to_miter_limit(angle);
 }
