@@ -1074,6 +1074,12 @@ pub const Context = opaque {
         return pixie_new_context(width, height);
     }
 
+    extern fn pixie_new_context_from_image(image: *Image) callconv(.C) *Context;
+    /// Create a new Context that will draw to image.
+    pub inline fn initFromImage(image: *Image) *Context {
+        return pixie_new_context_from_image(image);
+    }
+
     extern fn pixie_context_get_image(self: *Context) callconv(.C) *Image;
     pub inline fn getImage(self: *Context) *Image {
         return pixie_context_get_image(self);

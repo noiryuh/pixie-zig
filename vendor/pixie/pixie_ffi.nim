@@ -9,7 +9,7 @@ import ./cffi
 type cstring = cistring
 
 # =========================================
-# Pixie FFI
+# Pixie bindings code
 # =========================================
 
 import std/unicode
@@ -67,6 +67,20 @@ proc drawImage3(
   dx, dy, dWidth, dHeight: float32
 ) {.raises: [PixieError].} =
   ctx.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight)
+
+# =========================================
+# Pixie custom code
+# =========================================
+
+proc pixie_new_context_from_image*(image: Image): Context {.raises: [], cdecl, exportc, dynlib.} =
+  try:
+    result = newContext(image)
+  except PixieError as e:
+    lastError = e
+
+# =========================================
+# Pixie generated internal code
+# =========================================
 
 proc pixie_check_error*(): bool {.raises: [], cdecl, exportc, dynlib.} =
   checkError()
