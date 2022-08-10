@@ -651,6 +651,66 @@ pub const Paint = opaque {
         return pixie_paint_set_image_mat(self, value);
     }
 
+    extern fn pixie_paint_gradient_handle_positions_len(self: *Paint) callconv(.C) isize;
+    pub inline fn lenGradientHandlePositions(self: *Paint) isize {
+        return pixie_paint_gradient_handle_positions_len(self);
+    }
+
+    extern fn pixie_paint_gradient_handle_positions_get(self: *Paint, index: isize) callconv(.C) Vector2;
+    pub inline fn getGradientHandlePositions(self: *Paint, index: isize) Vector2 {
+        return pixie_paint_gradient_handle_positions_get(self, index);
+    }
+
+    extern fn pixie_paint_gradient_handle_positions_set(self: *Paint, index: isize, value: Vector2) callconv(.C) void;
+    pub inline fn setGradientHandlePositions(self: *Paint, index: isize, value: Vector2) void {
+        return pixie_paint_gradient_handle_positions_set(self, index, value);
+    }
+
+    extern fn pixie_paint_gradient_handle_positions_add(self: *Paint, value: Vector2) callconv(.C) void;
+    pub inline fn appendGradientHandlePositions(self: *Paint, value: Vector2) void {
+        return pixie_paint_gradient_handle_positions_add(self, value);
+    }
+
+    extern fn pixie_paint_gradient_handle_positions_delete(self: *Paint, index: isize) callconv(.C) void;
+    pub inline fn orderedRemoveGradientHandlePositions(self: *Paint, index: isize) void {
+        return pixie_paint_gradient_handle_positions_delete(self, index);
+    }
+
+    extern fn pixie_paint_gradient_handle_positions_clear(self: *Paint) callconv(.C) void;
+    pub inline fn clearGradientHandlePositions(self: *Paint) void {
+        return pixie_paint_gradient_handle_positions_clear(self);
+    }
+
+    extern fn pixie_paint_gradient_stops_len(self: *Paint) callconv(.C) isize;
+    pub inline fn lenGradientStops(self: *Paint) isize {
+        return pixie_paint_gradient_stops_len(self);
+    }
+
+    extern fn pixie_paint_gradient_stops_get(self: *Paint, index: isize) callconv(.C) ColorStop;
+    pub inline fn getGradientStops(self: *Paint, index: isize) ColorStop {
+        return pixie_paint_gradient_stops_get(self, index);
+    }
+
+    extern fn pixie_paint_gradient_stops_set(self: *Paint, index: isize, value: ColorStop) callconv(.C) void;
+    pub inline fn setGradientStops(self: *Paint, index: isize, value: ColorStop) void {
+        return pixie_paint_gradient_stops_set(self, index, value);
+    }
+
+    extern fn pixie_paint_gradient_stops_add(self: *Paint, value: ColorStop) callconv(.C) void;
+    pub inline fn appendGradientStops(self: *Paint, value: ColorStop) void {
+        return pixie_paint_gradient_stops_add(self, value);
+    }
+
+    extern fn pixie_paint_gradient_stops_delete(self: *Paint, index: isize) callconv(.C) void;
+    pub inline fn orderedRemoveGradientStops(self: *Paint, index: isize) void {
+        return pixie_paint_gradient_stops_delete(self, index);
+    }
+
+    extern fn pixie_paint_gradient_stops_clear(self: *Paint) callconv(.C) void;
+    pub inline fn clearGradientStops(self: *Paint) void {
+        return pixie_paint_gradient_stops_clear(self);
+    }
+
     extern fn pixie_paint_copy(self: *Paint) callconv(.C) *Paint;
     /// Create a new Paint with the same properties.
     pub inline fn copy(self: *Paint) *Paint {
@@ -912,6 +972,36 @@ pub const Font = opaque {
     extern fn pixie_font_set_line_height(self: *Font, value: f32) callconv(.C) void;
     pub inline fn setLineHeight(self: *Font, value: f32) void {
         return pixie_font_set_line_height(self, value);
+    }
+
+    extern fn pixie_font_paints_len(self: *Font) callconv(.C) isize;
+    pub inline fn lenPaints(self: *Font) isize {
+        return pixie_font_paints_len(self);
+    }
+
+    extern fn pixie_font_paints_get(self: *Font, index: isize) callconv(.C) *Paint;
+    pub inline fn getPaints(self: *Font, index: isize) *Paint {
+        return pixie_font_paints_get(self, index);
+    }
+
+    extern fn pixie_font_paints_set(self: *Font, index: isize, value: *Paint) callconv(.C) void;
+    pub inline fn setPaints(self: *Font, index: isize, value: *Paint) void {
+        return pixie_font_paints_set(self, index, value);
+    }
+
+    extern fn pixie_font_paints_add(self: *Font, value: *Paint) callconv(.C) void;
+    pub inline fn appendPaints(self: *Font, value: *Paint) void {
+        return pixie_font_paints_add(self, value);
+    }
+
+    extern fn pixie_font_paints_delete(self: *Font, index: isize) callconv(.C) void;
+    pub inline fn orderedRemovePaints(self: *Font, index: isize) void {
+        return pixie_font_paints_delete(self, index);
+    }
+
+    extern fn pixie_font_paints_clear(self: *Font) callconv(.C) void;
+    pub inline fn clearPaints(self: *Font) void {
+        return pixie_font_paints_clear(self);
     }
 
     extern fn pixie_font_get_paint(self: *Font) callconv(.C) *Paint;
