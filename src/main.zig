@@ -251,9 +251,9 @@ pub const SeqFloat32 = opaque {
         return pixie_seq_float32_add(self, value);
     }
 
-    extern fn pixie_seq_float32_add(self: *SeqFloat32, index: isize) callconv(.C) void;
+    extern fn pixie_seq_float32_delete(self: *SeqFloat32, index: isize) callconv(.C) void;
     pub inline fn orderedRemove(self: *SeqFloat32, index: isize) void {
-        return pixie_seq_float32_add(self, index);
+        return pixie_seq_float32_delete(self, index);
     }
 
     extern fn pixie_seq_float32_clear(self: *SeqFloat32) callconv(.C) void;
@@ -293,9 +293,9 @@ pub const SeqSpan = opaque {
         return pixie_seq_span_add(self, value);
     }
 
-    extern fn pixie_seq_span_add(self: *SeqSpan, index: isize) callconv(.C) void;
+    extern fn pixie_seq_span_delete(self: *SeqSpan, index: isize) callconv(.C) void;
     pub inline fn orderedRemove(self: *SeqSpan, index: isize) void {
-        return pixie_seq_span_add(self, index);
+        return pixie_seq_span_delete(self, index);
     }
 
     extern fn pixie_seq_span_clear(self: *SeqSpan) callconv(.C) void;
@@ -305,11 +305,11 @@ pub const SeqSpan = opaque {
 
     extern fn pixie_seq_span_typeset(self: *SeqSpan, bounds: Vector2, h_align: HorizontalAlignment, v_align: VerticalAlignment, wrap: bool) callconv(.C) *Arrangement;
     /// Lays out the character glyphs and returns the arrangement.
-    /// Optional parameters
-    /// Width determines wrapping and hAlign, height for vAlign
-    /// Horizontal alignment of the text
-    /// Vertical alignment of the text
-    /// Enable/disable text wrapping
+    /// Optional parameters:
+    /// bounds: width determines wrapping and hAlign, height for vAlign
+    /// hAlign: horizontal alignment of the text
+    /// vAlign: vertical alignment of the text
+    /// wrap: enable/disable text wrapping
     pub inline fn typeset(self: *SeqSpan, bounds: Vector2, h_align: HorizontalAlignment, v_align: VerticalAlignment, wrap: bool) *Arrangement {
         return pixie_seq_span_typeset(self, bounds, h_align, v_align, wrap);
     }
@@ -355,7 +355,7 @@ pub const Image = opaque {
 
     extern fn pixie_image_write_file(self: *Image, file_path: [*:0]const u8) callconv(.C) void;
     /// Writes an image to a file.
-    pub inline fn writeFile(self: *Image, file_path: [:0]const u8) void {
+    pub inline fn writeToFile(self: *Image, file_path: [:0]const u8) void {
         return pixie_image_write_file(self, file_path.ptr);
     }
 
