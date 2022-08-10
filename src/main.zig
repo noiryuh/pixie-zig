@@ -730,6 +730,12 @@ pub const Path = opaque {
         return pixie_new_path();
     }
 
+    extern fn pixie_parse_path(s: [*:0]const u8) callconv(.C) *Path;
+    /// Converts a SVG style path string into seq of commands.
+    pub inline fn parseFromString(s: [:0]const u8) *Path {
+        return pixie_parse_path(s.ptr);
+    }
+
     extern fn pixie_path_copy(self: *Path) callconv(.C) *Path;
     pub inline fn copy(self: *Path) *Path {
         return pixie_path_copy(self);
@@ -1058,12 +1064,6 @@ pub const Font = opaque {
     /// Loads a font from a file.
     pub inline fn loadFromFile(file_path: [:0]const u8) *Font {
         return pixie_read_font(file_path.ptr);
-    }
-
-    extern fn pixie_parse_path(s: [*:0]const u8) callconv(.C) *Path;
-    /// Converts a SVG style path string into seq of commands.
-    pub inline fn parseFromString(s: [:0]const u8) *Path {
-        return pixie_parse_path(s.ptr);
     }
 
     extern fn pixie_font_copy(self: *Font) callconv(.C) *Font;
