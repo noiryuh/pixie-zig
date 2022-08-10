@@ -6,9 +6,51 @@ fn getRootPath() []const u8 {
     return std.fs.path.dirname(@src().file) orelse ".";
 }
 
-pub fn build(b: *std.build.Builder) void {
-    _ = b;
+pub fn build(b: *std.build.Builder) !void {
+    const target = b.standardTargetOptions(.{});
+    const mode = b.standardReleaseOptions();
+
+    const build_command = try NimBuild.makeCommand(b.allocator, root_path ++ "/vendor/pixie/pixie_ffi.nim", .{
+        .mode = .release,
+        .gc = .arc,
+        .linkage = .static,
+        .optimization = .speed,
+        .use_lto = true,
+        .extra_options = &[_][]const u8{
+            "--cc=clang",
+            "--clang.exe=zig-cc",
+        },
+    });
+    defer b.allocator.free(build_command);
+    _ = b.exec(build_command) catch @panic("failed to build 'pixie'");
+
+    for (examples) |example| {
+        const exe = b.addExecutable(example.name, example.path);
+        exe.setTarget(target);
+        exe.setBuildMode(mode);
+
+        // zig fmt: off
+        linkPkg(b, exe, .{.link_pixie = .{
+            .name = "pixie_ffi",
+            .path = root_path ++ "/vendor/pixie",
+        }});
+        // zig fmt: on
+
+        exe.install();
+    }
 }
+
+const Example = struct {
+    name: []const u8,
+    path: []const u8,
+};
+
+const examples = [_]Example{
+    Example{
+        .name = "square",
+        .path = root_path ++ "/example/square.zig",
+    },
+};
 
 // ========================================
 // Package SDK
@@ -53,7 +95,6 @@ pub fn linkPkg(b: *std.build.Builder, exe: *std.build.LibExeObjStep, option: Lin
             // Make a build command
             const build_command = NimBuild.makeCommand(b.allocator, pixie_path ++ "/pixie_ffi.nim", opt.option) catch unreachable;
             defer b.allocator.free(build_command);
-
             _ = b.exec(build_command) catch @panic("failed to build 'pixie'");
 
             exe.addLibraryPath(pixie_path);
