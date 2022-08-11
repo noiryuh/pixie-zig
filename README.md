@@ -49,7 +49,7 @@ pub fn build(b: *std.build.Builder) void {
     // If you prefer linking with shared/static library
     // or already have pre-installed library
     pixie.linkPkg(b, exe, .{.link_pixie = .{
-        .path = "/path/to/directory/containing/libpixie.*", // .so, .dll, .dylib
+        .path = "/path/to/directory/containing/library", // .a, .so, .lib, .dylib
     }});
 }
 ```
