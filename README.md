@@ -19,8 +19,8 @@ pub fn build(b: *std.build.Builder) void {
             // If you prefer using `zig cc`
             .extra_options = &[_][]const u8{
                 "--cc:clang",
-                "--clang.exe=zig-cc", // Make sure you already have a `zig cc` wrapper in $PATH
-                                      // because if not, Nim will find a program called `zig\ cc`
+                "--clang.exe=zig-cc",        // Make sure you already have a `zig cc` wrapper in $PATH
+                "--clang.linkerexe=zig-cc",  // because if not, Nim will find a program called `zig\ cc`
             },
         },
     }});
