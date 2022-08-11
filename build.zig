@@ -15,10 +15,16 @@ pub fn build(b: *std.build.Builder) !void {
         .gc = .arc,
         .linkage = .static,
         .optimization = .speed,
-        .use_lto = true,
         .extra_options = &[_][]const u8{
             "--cc=clang",
             "--clang.exe=zig-cc",
+            "--clang.linkerexe=zig-cc",
+
+            // // Cross-compile to windows mingw
+            // "-t:-target x86_64-windows-gnu",
+            // "-l:-target x86_64-windows-gnu",
+            // "--os:windows",
+            // "-d:mingw",
         },
     });
     defer b.allocator.free(build_command);
