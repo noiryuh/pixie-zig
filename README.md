@@ -5,9 +5,7 @@ Zig wrapper for [pixie](https://github.com/treeform/pixie), a full-featured 2D g
 
 ## Building
 
-In `build.zig`.
-
-*(for cross-compiling, copy the `// Cross-compile` section and use `zig build -Dtarget=arch-os-abi` like in below example)*
+In `build.zig`
 ```zig
 const std = @import("std");
 const pixie = @import("pixie-zig/build.zig");
@@ -55,6 +53,7 @@ pub fn build(b: *std.build.Builder) void {
     }});
 }
 ```
+*(for cross-compiling, copy the `// Cross-compile` section and use `zig build -Dtarget=arch-os-abi` like in above example)*
 
 
 ## Usage
