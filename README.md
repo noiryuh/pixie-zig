@@ -64,7 +64,7 @@ const std = @import("std");
 const pixie = @import("pixie-zig");
 
 pub fn main() !void {
-    var img = pixie.Image.initBlank(128, 128);
+    var img = pixie.Image.init(128, 128);
     defer img.deinit();
 
     // Fill entire image with provided color
