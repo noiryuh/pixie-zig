@@ -6,7 +6,7 @@ fn getRootPath() []const u8 {
     return std.fs.path.dirname(@src().file) orelse ".";
 }
 
-pub fn build(b: *std.build.Builder) !void {
+pub fn build(b: *std.build.Builder) void {
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
 
