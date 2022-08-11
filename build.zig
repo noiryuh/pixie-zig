@@ -10,35 +10,43 @@ pub fn build(b: *std.build.Builder) !void {
     const target = b.standardTargetOptions(.{});
     const mode = b.standardReleaseOptions();
 
-    const build_command = try NimBuild.makeCommand(b.allocator, root_path ++ "/vendor/pixie/pixie_ffi.nim", .{
-        .mode = .release,
-        .gc = .arc,
-        .linkage = .static,
-        .optimization = .speed,
-        .extra_options = &[_][]const u8{
-            "--cc=clang",
-            "--clang.exe=zig-cc",
-            "--clang.linkerexe=zig-cc",
-
-            // // Cross-compile to windows mingw
-            // "-t:-target x86_64-windows-gnu",
-            // "-l:-target x86_64-windows-gnu",
-            // "--os:windows",
-            // "-d:mingw",
-        },
-    });
-    defer b.allocator.free(build_command);
-    _ = b.exec(build_command) catch @panic("failed to build 'pixie'");
-
     for (examples) |example| {
         const exe = b.addExecutable(example.name, example.path);
         exe.setTarget(target);
         exe.setBuildMode(mode);
 
         // zig fmt: off
-        linkPkg(b, exe, .{.link_pixie = .{
-            .name = "pixie_ffi",
-            .path = root_path ++ "/vendor/pixie",
+        linkPkg(b, exe, .{.build_pixie = .{
+            .check_existence = true,
+            .option = .{
+                .gc = .arc,
+                .extra_options = &[_][]const u8{
+                    "--cc:clang",
+                    "--clang.exe:zig-cc",
+                    "--clang.linkerexe:zig-cc",
+
+                    // // Cross-compile for Linux Glibc
+                    // "-t:-target x86_64-linux-gnu",
+                    // "-t:-target x86_64-linux-gnu",
+                    // "--os:linux",
+
+                    // // Cross-compile for Linux Musl
+                    // "-t:-target x86_64-linux-musl",
+                    // "-t:-target x86_64-linux-musl",
+                    // "--os:linux",
+
+                    // // Cross-compile for Windows
+                    // "-t:-target x86_64-windows-gnu",
+                    // "-l:-target x86_64-windows-gnu",
+                    // "--os:windows",
+                    // "-d:mingw",
+
+                    // // Cross-compile for Macos
+                    // "-t:-target x86_64-macos",
+                    // "-l:-target x86_64-macos",
+                    // "--os:macosx",
+                },
+            },
         }});
         // zig fmt: on
 
@@ -71,6 +79,29 @@ pub const pkg = std.build.Pkg{
     .source = .{ .path = root_path ++ "/src/main.zig" },
 };
 
+pub const LinkPkgOption = union(enum) {
+    /// Link pre-installed 'pixie'
+    link_pixie: struct {
+        path: []const u8,
+        name: []const u8 = "pixie",
+    },
+
+    /// Build 'pixie' from source
+    build_pixie: struct {
+        /// Install via `nimble`
+        install_pixie: bool = false,
+        /// Check if 'pixie_ffi' exists
+        check_existence: bool = false,
+        /// Nim build options
+        option: NimBuild = .{
+            .mode = .release,
+            .gc = .orc,
+            .linkage = .static,
+            .optimization = .speed,
+        },
+    },
+};
+
 pub fn linkPkg(b: *std.build.Builder, exe: *std.build.LibExeObjStep, option: LinkPkgOption) void {
     const pixie_path = root_path ++ "/vendor/pixie";
 
@@ -83,8 +114,43 @@ pub fn linkPkg(b: *std.build.Builder, exe: *std.build.LibExeObjStep, option: Lin
         .link_pixie => |opt| {
             exe.addLibraryPath(opt.path);
             exe.linkSystemLibrary(opt.name);
+            exe.addPackage(pkg);
         },
         .build_pixie => |opt| {
+            if (opt.check_existence) {
+                const library_paths = switch (exe.target.getOsTag()) {
+                    .windows => &[_][]const u8{
+                        pixie_path ++ "/libpixie_ffi.a",
+                        pixie_path ++ "/libpixie_ffi.lib",
+                        pixie_path ++ "/libpixie_ffi.dll",
+                        pixie_path ++ "/pixie_ffi.a",
+                        pixie_path ++ "/pixie_ffi.lib",
+                        pixie_path ++ "/pixie_ffi.dll",
+                    },
+                    .macos => &[_][]const u8{
+                        pixie_path ++ "/libpixie_ffi.a",
+                        pixie_path ++ "/libpixie_ffi.so",
+                        pixie_path ++ "/libpixie_ffi.dylib",
+                        pixie_path ++ "/pixie_ffi.a",
+                        pixie_path ++ "/pixie_ffi.so",
+                        pixie_path ++ "/pixie_ffi.dylib",
+                    },
+                    else => &[_][]const u8{
+                        pixie_path ++ "/libpixie_ffi.a",
+                        pixie_path ++ "/libpixie_ffi.so",
+                        pixie_path ++ "/pixie_ffi.a",
+                        pixie_path ++ "/pixie_ffi.so",
+                    },
+                };
+
+                for (library_paths) |library_path| if (checkFileExist(library_path)) {
+                    exe.addLibraryPath(pixie_path);
+                    exe.linkSystemLibrary("pixie_ffi");
+                    exe.addPackage(pkg);
+                    return;
+                };
+            }
+
             _ = b.findProgram(
                 &[_][]const u8{"nim"},
                 &[_][]const u8{},
@@ -109,27 +175,20 @@ pub fn linkPkg(b: *std.build.Builder, exe: *std.build.LibExeObjStep, option: Lin
 
             exe.addLibraryPath(pixie_path);
             exe.linkSystemLibrary("pixie_ffi");
+            exe.addPackage(pkg);
         },
     }
-
-    exe.addPackage(pkg);
 }
 
-pub const LinkPkgOption = union(enum) {
-    /// Link pre-installed 'pixie'
-    link_pixie: struct {
-        path: []const u8,
-        name: []const u8 = "pixie",
-    },
+fn checkFileExist(path: []const u8) bool {
+    var file = std.fs.cwd().openFile(path, .{}) catch |err| switch (err) {
+        error.FileNotFound => return false,
+        else => unreachable,
+    };
+    defer file.close();
 
-    /// Build 'pixie' from source
-    build_pixie: struct {
-        /// Install via `nimble`
-        install_pixie: bool = false,
-        /// Nim build options
-        option: NimBuild = .{},
-    },
-};
+    return true;
+}
 
 pub const NimBuild = struct {
     /// Build mode
