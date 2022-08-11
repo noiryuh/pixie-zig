@@ -5,7 +5,7 @@ Zig wrapper for [pixie](https://github.com/treeform/pixie), a full-featured 2D g
 
 ## Building
 
-In `build.zig`
+In `build.zig`. *(for cross-compiling, copy the `// Cross-compile` section and use `zig build -Dtarget=arch-os-abi` like `-target` in below example)*
 ```zig
 const std = @import("std");
 const pixie = @import("pixie-zig/build.zig");
@@ -21,6 +21,27 @@ pub fn build(b: *std.build.Builder) void {
                 "--cc:clang",
                 "--clang.exe=zig-cc",        // Make sure you already have a `zig cc` wrapper in $PATH
                 "--clang.linkerexe=zig-cc",  // because if not, Nim will find a program called `zig\ cc`
+
+                // // Cross-compile for Linux Glibc
+                // "-t:-target x86_64-linux-gnu",
+                // "-t:-target x86_64-linux-gnu",
+                // "--os:linux",
+
+                // // Cross-compile for Linux Musl
+                // "-t:-target x86_64-linux-musl",
+                // "-t:-target x86_64-linux-musl",
+                // "--os:linux",
+
+                // // Cross-compile for Windows
+                // "-t:-target x86_64-windows-gnu",
+                // "-l:-target x86_64-windows-gnu",
+                // "--os:windows",
+                // "-d:mingw",
+
+                // // Cross-compile for Macos
+                // "-t:-target x86_64-macos",
+                // "-l:-target x86_64-macos",
+                // "--os:macosx",
             },
         },
     }});
