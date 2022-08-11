@@ -1,5 +1,10 @@
 zig-cache/
 zig-out/
 
-libpixie*
-libpixie_ffi*
+*.a
+*.so
+*.pdb
+*.lib
+*.dll
+*.exe
+*.dylib
