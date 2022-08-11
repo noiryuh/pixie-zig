@@ -90,7 +90,7 @@ pub const LinkPkgOption = union(enum) {
     build_pixie: struct {
         /// Install via `nimble`
         install_pixie: bool = false,
-        /// Check if 'pixie_ffi' exists
+        /// Check if library 'pixie_ffi' exists
         check_existence: bool = false,
         /// Nim build options
         option: NimBuild = .{
