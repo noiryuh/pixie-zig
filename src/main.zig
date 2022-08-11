@@ -252,7 +252,7 @@ pub const SeqFloat32 = opaque {
     }
 
     extern fn pixie_seq_float32_delete(self: *SeqFloat32, index: isize) callconv(.C) void;
-    pub inline fn orderedRemove(self: *SeqFloat32, index: isize) void {
+    pub inline fn remove(self: *SeqFloat32, index: isize) void {
         return pixie_seq_float32_delete(self, index);
     }
 
@@ -294,7 +294,7 @@ pub const SeqSpan = opaque {
     }
 
     extern fn pixie_seq_span_delete(self: *SeqSpan, index: isize) callconv(.C) void;
-    pub inline fn orderedRemove(self: *SeqSpan, index: isize) void {
+    pub inline fn remove(self: *SeqSpan, index: isize) void {
         return pixie_seq_span_delete(self, index);
     }
 
@@ -672,7 +672,7 @@ pub const Paint = opaque {
     }
 
     extern fn pixie_paint_gradient_handle_positions_delete(self: *Paint, index: isize) callconv(.C) void;
-    pub inline fn orderedRemoveGradientHandlePositions(self: *Paint, index: isize) void {
+    pub inline fn removeGradientHandlePositions(self: *Paint, index: isize) void {
         return pixie_paint_gradient_handle_positions_delete(self, index);
     }
 
@@ -702,7 +702,7 @@ pub const Paint = opaque {
     }
 
     extern fn pixie_paint_gradient_stops_delete(self: *Paint, index: isize) callconv(.C) void;
-    pub inline fn orderedRemoveGradientStops(self: *Paint, index: isize) void {
+    pub inline fn removeGradientStops(self: *Paint, index: isize) void {
         return pixie_paint_gradient_stops_delete(self, index);
     }
 
@@ -1001,7 +1001,7 @@ pub const Font = opaque {
     }
 
     extern fn pixie_font_paints_delete(self: *Font, index: isize) callconv(.C) void;
-    pub inline fn orderedRemovePaints(self: *Font, index: isize) void {
+    pub inline fn removePaints(self: *Font, index: isize) void {
         return pixie_font_paints_delete(self, index);
     }
 
