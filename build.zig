@@ -24,27 +24,6 @@ pub fn build(b: *std.build.Builder) !void {
                     "--cc:clang",
                     "--clang.exe:zig-cc",
                     "--clang.linkerexe:zig-cc",
-
-                    // // Cross-compile for Linux Glibc
-                    // "-t:-target x86_64-linux-gnu",
-                    // "-t:-target x86_64-linux-gnu",
-                    // "--os:linux",
-
-                    // // Cross-compile for Linux Musl
-                    // "-t:-target x86_64-linux-musl",
-                    // "-t:-target x86_64-linux-musl",
-                    // "--os:linux",
-
-                    // // Cross-compile for Windows
-                    // "-t:-target x86_64-windows-gnu",
-                    // "-l:-target x86_64-windows-gnu",
-                    // "--os:windows",
-                    // "-d:mingw",
-
-                    // // Cross-compile for Macos
-                    // "-t:-target x86_64-macos",
-                    // "-l:-target x86_64-macos",
-                    // "--os:macosx",
                 },
             },
         }});
