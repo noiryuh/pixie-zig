@@ -1,5 +1,9 @@
 const std = @import("std");
 
+pub const Error = error{
+    PixieError,
+};
+
 pub const auto_line_height = -1.0;
 pub const default_miter_limit = 4.0;
 
@@ -168,8 +172,11 @@ pub const Color = extern struct {
     }
 
     extern fn pixie_parse_color(s: [*:0]const u8) callconv(.C) Color;
-    pub inline fn parseFromString(s: [:0]const u8) Color {
-        return pixie_parse_color(s.ptr);
+    pub inline fn parseFromString(s: [:0]const u8) Error!Color {
+        const result = pixie_parse_color(s.ptr);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_mix(a: Color, b: Color, v: f32) callconv(.C) Color;
@@ -207,16 +214,22 @@ pub const ImageDimensions = extern struct {
         return pixie_image_dimensions_eq(self, other);
     }
 
-    extern fn pixie_read_image_dimensions(path: [*:0]const u8) callconv(.C) ImageDimensions;
+    extern fn pixie_read_image_dimensions(file_path: [*:0]const u8) callconv(.C) ImageDimensions;
     /// Decodes an image's dimensions from a file.
-    pub inline fn loadFromFile(file_path: [:0]const u8) ImageDimensions {
-        return pixie_read_image_dimensions(file_path.ptr);
+    pub inline fn loadFromFile(file_path: [:0]const u8) Error!ImageDimensions {
+        const result = pixie_read_image_dimensions(file_path.ptr);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_decode_image_dimensions(data: [*:0]const u8) callconv(.C) ImageDimensions;
     /// Decodes an image's dimensions from memory.
-    pub inline fn loadFromMemory(data: [:0]const u8) ImageDimensions {
-        return pixie_decode_image_dimensions(data.ptr);
+    pub inline fn loadFromMemory(data: [:0]const u8) Error!ImageDimensions {
+        const result = pixie_decode_image_dimensions(data.ptr);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 };
 
@@ -329,8 +342,11 @@ pub const Image = opaque {
 
     extern fn pixie_new_image(width: isize, height: isize) callconv(.C) *Image;
     /// Creates a new image with the parameter dimensions.
-    pub inline fn init(width: isize, height: isize) *Image {
-        return pixie_new_image(width, height);
+    pub inline fn init(width: isize, height: isize) Error!*Image {
+        const result = pixie_new_image(width, height);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_get_width(self: *Image) callconv(.C) isize;
@@ -355,20 +371,29 @@ pub const Image = opaque {
 
     extern fn pixie_image_write_file(self: *Image, file_path: [*:0]const u8) callconv(.C) void;
     /// Writes an image to a file.
-    pub inline fn writeToFile(self: *Image, file_path: [:0]const u8) void {
-        return pixie_image_write_file(self, file_path.ptr);
-    }
-
-    extern fn pixie_decode_image(data: [*:0]const u8) callconv(.C) *Image;
-    /// Loads an image from memory.
-    pub inline fn loadFromMemory(data: [:0]const u8) *Image {
-        return pixie_decode_image(data.ptr);
+    pub inline fn writeToFile(self: *Image, path: [:0]const u8) Error!void {
+        const result = pixie_image_write_file(self, path.ptr);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_read_image(file_path: [*:0]const u8) callconv(.C) *Image;
     /// Loads an image from a file.
-    pub inline fn loadFromFile(file_path: [:0]const u8) *Image {
-        return pixie_read_image(file_path.ptr);
+    pub inline fn loadFromFile(file_path: [:0]const u8) Error!*Image {
+        const result = pixie_read_image(file_path.ptr);
+        if (checkError())
+            return error.PixieError;
+        return result;
+    }
+
+    extern fn pixie_decode_image(data: [*:0]const u8) callconv(.C) *Image;
+    /// Loads an image from memory.
+    pub inline fn loadFromMemory(data: [:0]const u8) Error!*Image {
+        const result = pixie_decode_image(data.ptr);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_copy(self: *Image) callconv(.C) *Image;
@@ -397,8 +422,11 @@ pub const Image = opaque {
 
     extern fn pixie_image_paint_fill(self: *Image, paint: *Paint) callconv(.C) void;
     /// Fills the image with the paint.
-    pub inline fn fillPaint(self: *Image, paint: *Paint) void {
-        return pixie_image_paint_fill(self, paint);
+    pub inline fn fillPaint(self: *Image, paint: *Paint) Error!void {
+        const result = pixie_image_paint_fill(self, paint);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_is_one_color(self: *Image) callconv(.C) bool;
@@ -433,33 +461,48 @@ pub const Image = opaque {
 
     extern fn pixie_image_rotate90(self: *Image) callconv(.C) void;
     /// Rotates the image 90 degrees clockwise.
-    pub inline fn rotate90(self: *Image) void {
-        return pixie_image_rotate90(self);
+    pub inline fn rotate90(self: *Image) Error!void {
+        const result = pixie_image_rotate90(self);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_sub_image(self: *Image, x: isize, y: isize, w: isize, h: isize) callconv(.C) *Image;
     /// Gets a sub image from this image.
-    pub inline fn subImage(self: *Image, x: isize, y: isize, w: isize, h: isize) *Image {
-        return pixie_image_sub_image(self, x, y, w, h);
+    pub inline fn subImage(self: *Image, x: isize, y: isize, w: isize, h: isize) Error!*Image {
+        const result = pixie_image_sub_image(self, x, y, w, h);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_rect_sub_image(self: *Image, rect: Rect) callconv(.C) *Image;
     /// Gets a sub image from this image via rectangle.
     /// Rectangle is snapped/expanded to whole pixels first.
-    pub inline fn subImageRect(self: *Image, rect: Rect) *Image {
-        return pixie_image_rect_sub_image(self, rect);
+    pub inline fn subImageRect(self: *Image, rect: Rect) Error!*Image {
+        const result = pixie_image_rect_sub_image(self, rect);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_minify_by2(self: *Image, power: isize) callconv(.C) *Image;
     /// Scales the image down by an integer scale.
-    pub inline fn minifyBy2(self: *Image, power: isize) *Image {
-        return pixie_image_minify_by2(self, power);
+    pub inline fn minifyBy2(self: *Image, power: isize) Error!*Image {
+        const result = pixie_image_minify_by2(self, power);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_magnify_by2(self: *Image, power: isize) callconv(.C) *Image;
     /// Scales image up by 2 ^ power.
-    pub inline fn magnifyBy2(self: *Image, power: isize) *Image {
-        return pixie_image_magnify_by2(self, power);
+    pub inline fn magnifyBy2(self: *Image, power: isize) Error!*Image {
+        const result = pixie_image_magnify_by2(self, power);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_apply_opacity(self: *Image, opacity: f32) callconv(.C) void;
@@ -482,38 +525,56 @@ pub const Image = opaque {
 
     extern fn pixie_image_blur(self: *Image, radius: f32, out_of_bounds: Color) callconv(.C) void;
     /// Applies Gaussian blur to the image given a radius.
-    pub inline fn blur(self: *Image, radius: f32, out_of_bounds: Color) void {
-        return pixie_image_blur(self, radius, out_of_bounds);
+    pub inline fn blur(self: *Image, radius: f32, out_of_bounds: Color) Error!void {
+        const result = pixie_image_blur(self, radius, out_of_bounds);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_resize(self: *Image, width: isize, height: isize) callconv(.C) *Image;
     /// Resize an image to a given height and width.
-    pub inline fn resize(self: *Image, width: isize, height: isize) *Image {
-        return pixie_image_resize(self, width, height);
+    pub inline fn resize(self: *Image, width: isize, height: isize) Error!*Image {
+        const result = pixie_image_resize(self, width, height);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_shadow(self: *Image, offset: Vector2, spread: f32, blur_value: f32, color: Color) callconv(.C) *Image;
     /// Create a shadow of the image with the offset, spread and blur.
-    pub inline fn shadow(self: *Image, offset: Vector2, spread: f32, blur_value: f32, color: Color) *Image {
-        return pixie_image_shadow(self, offset, spread, blur_value, color);
+    pub inline fn shadow(self: *Image, offset: Vector2, spread: f32, blur_value: f32, color: Color) Error!*Image {
+        const result = pixie_image_shadow(self, offset, spread, blur_value, color);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_super_image(self: *Image, x: isize, y: isize, w: isize, h: isize) callconv(.C) *Image;
     /// Either cuts a sub image or returns a super image with padded transparency.
-    pub inline fn superImage(self: *Image, x: isize, y: isize, w: isize, h: isize) *Image {
-        return pixie_image_super_image(self, x, y, w, h);
+    pub inline fn superImage(self: *Image, x: isize, y: isize, w: isize, h: isize) Error!*Image {
+        const result = pixie_image_super_image(self, x, y, w, h);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_draw(self: *Image, b: *Image, transform_value: Matrix3, blend_mode: BlendMode) callconv(.C) void;
     /// Draws one image onto another using a matrix transform and color blending.
-    pub inline fn draw(self: *Image, b: *Image, transform_value: Matrix3, blend_mode: BlendMode) void {
-        return pixie_image_draw(self, b, transform_value, blend_mode);
+    pub inline fn draw(self: *Image, b: *Image, transform_value: Matrix3, blend_mode: BlendMode) Error!void {
+        const result = pixie_image_draw(self, b, transform_value, blend_mode);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_fill_gradient(self: *Image, paint: *Paint) callconv(.C) void;
     /// Fills with the Paint gradient.
-    pub inline fn fillGradient(self: *Image, paint: *Paint) void {
-        return pixie_image_fill_gradient(self, paint);
+    pub inline fn fillGradient(self: *Image, paint: *Paint) Error!void {
+        const result = pixie_image_fill_gradient(self, paint);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_fill_text(self: *Image, font: *Font, text: [*:0]const u8, transform_value: Matrix3, bounds: Vector2, h_align: HorizontalAlignment, v_align: VerticalAlignment) callconv(.C) void;
@@ -522,14 +583,20 @@ pub const Image = opaque {
     /// bounds: width determines wrapping and hAlign, height for vAlign
     /// hAlign: horizontal alignment of the text
     /// vAlign: vertical alignment of the text
-    pub inline fn fillText(self: *Image, font: *Font, text: [:0]const u8, transform_value: Matrix3, bounds: Vector2, h_align: HorizontalAlignment, v_align: VerticalAlignment) void {
-        return pixie_image_fill_text(self, font, text.ptr, transform_value, bounds, h_align, v_align);
+    pub inline fn fillText(self: *Image, font: *Font, text: [:0]const u8, transform_value: Matrix3, bounds: Vector2, h_align: HorizontalAlignment, v_align: VerticalAlignment) Error!void {
+        const result = pixie_image_fill_text(self, font, text.ptr, transform_value, bounds, h_align, v_align);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_arrangement_fill_text(self: *Image, arrangement: *Arrangement, transform_value: Matrix3) callconv(.C) void;
     /// Fills the text arrangement.
-    pub inline fn fillTextArrangement(self: *Image, arrangement: *Arrangement, transform_value: Matrix3) void {
-        return pixie_image_arrangement_fill_text(self, arrangement, transform_value);
+    pub inline fn fillTextArrangement(self: *Image, arrangement: *Arrangement, transform_value: Matrix3) Error!void {
+        const result = pixie_image_arrangement_fill_text(self, arrangement, transform_value);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_stroke_text(self: *Image, font: *Font, text: [*:0]const u8, transform_value: Matrix3, stroke_width: f32, bounds: Vector2, h_align: HorizontalAlignment, v_align: VerticalAlignment, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) callconv(.C) void;
@@ -540,26 +607,38 @@ pub const Image = opaque {
     /// vAlign: vertical alignment of the text
     /// lineCap: stroke line cap shape
     /// lineJoin: stroke line join shape
-    pub inline fn strokeText(self: *Image, font: *Font, text: [:0]const u8, transform_value: Matrix3, stroke_width: f32, bounds: Vector2, h_align: HorizontalAlignment, v_align: VerticalAlignment, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) void {
-        return pixie_image_stroke_text(self, font, text.ptr, transform_value, stroke_width, bounds, h_align, v_align, line_cap, line_join, miter_limit, dashes);
+    pub inline fn strokeText(self: *Image, font: *Font, text: [:0]const u8, transform_value: Matrix3, stroke_width: f32, bounds: Vector2, h_align: HorizontalAlignment, v_align: VerticalAlignment, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) Error!void {
+        const result = pixie_image_stroke_text(self, font, text.ptr, transform_value, stroke_width, bounds, h_align, v_align, line_cap, line_join, miter_limit, dashes);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_arrangement_stroke_text(self: *Image, arrangement: *Arrangement, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) callconv(.C) void;
     /// Strokes the text arrangement.
-    pub inline fn strokeTextArrangement(self: *Image, arrangement: *Arrangement, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) void {
-        return pixie_image_arrangement_stroke_text(self, arrangement, transform_value, stroke_width, line_cap, line_join, miter_limit, dashes);
+    pub inline fn strokeTextArrangement(self: *Image, arrangement: *Arrangement, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) Error!void {
+        const result = pixie_image_arrangement_stroke_text(self, arrangement, transform_value, stroke_width, line_cap, line_join, miter_limit, dashes);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_fill_path(self: *Image, path: *Path, paint: *Paint, transform_value: Matrix3, winding_rule: WindingRule) callconv(.C) void;
     /// Fills a path.
-    pub inline fn fillPath(self: *Image, path: *Path, paint: *Paint, transform_value: Matrix3, winding_rule: WindingRule) void {
-        return pixie_image_fill_path(self, path, paint, transform_value, winding_rule);
+    pub inline fn fillPath(self: *Image, path: *Path, paint: *Paint, transform_value: Matrix3, winding_rule: WindingRule) Error!void {
+        const result = pixie_image_fill_path(self, path, paint, transform_value, winding_rule);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_stroke_path(self: *Image, path: *Path, paint: *Paint, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) callconv(.C) void;
     /// Strokes a path.
-    pub inline fn strokePath(self: *Image, path: *Path, paint: *Paint, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) void {
-        return pixie_image_stroke_path(self, path, paint, transform_value, stroke_width, line_cap, line_join, miter_limit, dashes);
+    pub inline fn strokePath(self: *Image, path: *Path, paint: *Paint, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) Error!void {
+        const result = pixie_image_stroke_path(self, path, paint, transform_value, stroke_width, line_cap, line_join, miter_limit, dashes);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_image_new_context(self: *Image) callconv(.C) *Context;
@@ -730,10 +809,13 @@ pub const Path = opaque {
         return pixie_new_path();
     }
 
-    extern fn pixie_parse_path(s: [*:0]const u8) callconv(.C) *Path;
+    extern fn pixie_parse_path(path: [*:0]const u8) callconv(.C) *Path;
     /// Converts a SVG style path string into seq of commands.
-    pub inline fn parseFromString(s: [:0]const u8) *Path {
-        return pixie_parse_path(s.ptr);
+    pub inline fn parseFromString(s: [:0]const u8) Error!*Path {
+        const result = pixie_parse_path(s.ptr);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_path_copy(self: *Path) callconv(.C) *Path;
@@ -763,21 +845,30 @@ pub const Path = opaque {
 
     extern fn pixie_path_compute_bounds(self: *Path, transform_value: Matrix3) callconv(.C) Rect;
     /// Compute the bounds of the path.
-    pub inline fn computeBounds(self: *Path, transform_value: Matrix3) Rect {
-        return pixie_path_compute_bounds(self, transform_value);
+    pub inline fn computeBounds(self: *Path, transform_value: Matrix3) Error!Rect {
+        const result = pixie_path_compute_bounds(self, transform_value);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_path_fill_overlaps(self: *Path, test_value: Vector2, transform_value: Matrix3, winding_rule: WindingRule) callconv(.C) bool;
     /// Returns whether or not the specified point is contained in the current path.
-    pub inline fn fillOverlaps(self: *Path, test_value: Vector2, transform_value: Matrix3, winding_rule: WindingRule) bool {
-        return pixie_path_fill_overlaps(self, test_value, transform_value, winding_rule);
+    pub inline fn fillOverlaps(self: *Path, test_value: Vector2, transform_value: Matrix3, winding_rule: WindingRule) Error!bool {
+        const result = pixie_path_fill_overlaps(self, test_value, transform_value, winding_rule);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_path_stroke_overlaps(self: *Path, test_value: Vector2, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) callconv(.C) bool;
     /// Returns whether or not the specified point is inside the area contained
     /// by the stroking of a path.
-    pub inline fn strokeOverlaps(self: *Path, test_value: Vector2, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) bool {
-        return pixie_path_stroke_overlaps(self, test_value, transform_value, stroke_width, line_cap, line_join, miter_limit, dashes);
+    pub inline fn strokeOverlaps(self: *Path, test_value: Vector2, transform_value: Matrix3, stroke_width: f32, line_cap: LineCap, line_join: LineJoin, miter_limit: f32, dashes: *SeqFloat32) Error!bool {
+        const result = pixie_path_stroke_overlaps(self, test_value, transform_value, stroke_width, line_cap, line_join, miter_limit, dashes);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_path_move_to(self: *Path, x: f32, y: f32) callconv(.C) void;
@@ -821,15 +912,21 @@ pub const Path = opaque {
 
     extern fn pixie_path_arc(self: *Path, x: f32, y: f32, r: f32, a0: f32, a1: f32, ccw: bool) callconv(.C) void;
     /// Adds a circular arc to the current sub-path.
-    pub inline fn arc(self: *Path, x: f32, y: f32, r: f32, a0: f32, a1: f32, ccw: bool) void {
-        return pixie_path_arc(self, x, y, r, a0, a1, ccw);
+    pub inline fn arc(self: *Path, x: f32, y: f32, r: f32, a0: f32, a1: f32, ccw: bool) Error!void {
+        const result = pixie_path_arc(self, x, y, r, a0, a1, ccw);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_path_arc_to(self: *Path, x1: f32, y1: f32, x2: f32, y2: f32, r: f32) callconv(.C) void;
     /// Adds a circular arc using the given control points and radius.
     /// Commonly used for making rounded corners.
-    pub inline fn arcTo(self: *Path, x1: f32, y1: f32, x2: f32, y2: f32, r: f32) void {
-        return pixie_path_arc_to(self, x1, y1, x2, y2, r);
+    pub inline fn arcTo(self: *Path, x1: f32, y1: f32, x2: f32, y2: f32, r: f32) Error!void {
+        const result = pixie_path_arc_to(self, x1, y1, x2, y2, r);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_path_rect(self: *Path, x: f32, y: f32, w: f32, h: f32, clockwise: bool) callconv(.C) void;
@@ -863,8 +960,11 @@ pub const Path = opaque {
     extern fn pixie_path_polygon(self: *Path, x: f32, y: f32, size: f32, sides: isize) callconv(.C) void;
     /// Adds an n-sided regular polygon at (x, y) with the parameter size.
     /// Polygons "face" north.
-    pub inline fn polygon(self: *Path, x: f32, y: f32, size: f32, sides: isize) void {
-        return pixie_path_polygon(self, x, y, size, sides);
+    pub inline fn polygon(self: *Path, x: f32, y: f32, size: f32, sides: isize) Error!void {
+        const result = pixie_path_polygon(self, x, y, size, sides);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 };
 
@@ -886,8 +986,11 @@ pub const Typeface = opaque {
 
     extern fn pixie_read_typeface(file_path: [*:0]const u8) callconv(.C) *Typeface;
     /// Loads a typeface from a file.
-    pub inline fn loadFromFile(file_path: [:0]const u8) *Typeface {
-        return pixie_read_typeface(file_path.ptr);
+    pub inline fn loadFromFile(file_path: [:0]const u8) Error!*Typeface {
+        const result = pixie_read_typeface(file_path.ptr);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_typeface_ascent(self: *Typeface) callconv(.C) f32;
@@ -922,8 +1025,11 @@ pub const Typeface = opaque {
 
     extern fn pixie_typeface_get_glyph_path(self: *Typeface, rune: u21) callconv(.C) *Path;
     /// The glyph path for the rune.
-    pub inline fn getGlyphPath(self: *Typeface, rune: u21) *Path {
-        return pixie_typeface_get_glyph_path(self, rune);
+    pub inline fn getGlyphPath(self: *Typeface, rune: u21) Error!*Path {
+        const result = pixie_typeface_get_glyph_path(self, rune);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_typeface_get_advance(self: *Typeface, rune: u21) callconv(.C) f32;
@@ -1062,8 +1168,11 @@ pub const Font = opaque {
 
     extern fn pixie_read_font(file_path: [*:0]const u8) callconv(.C) *Font;
     /// Loads a font from a file.
-    pub inline fn loadFromFile(file_path: [:0]const u8) *Font {
-        return pixie_read_font(file_path.ptr);
+    pub inline fn loadFromFile(file_path: [:0]const u8) Error!*Font {
+        const result = pixie_read_font(file_path.ptr);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_font_copy(self: *Font) callconv(.C) *Font;
@@ -1147,8 +1256,11 @@ pub const Arrangement = opaque {
     }
 
     extern fn pixie_arrangement_compute_bounds(self: *Arrangement, transform_value: Matrix3) callconv(.C) Rect;
-    pub inline fn computeBounds(self: *Arrangement, transform_value: Matrix3) Rect {
-        return pixie_arrangement_compute_bounds(self, transform_value);
+    pub inline fn computeBounds(self: *Arrangement, transform_value: Matrix3) Error!Rect {
+        const result = pixie_arrangement_compute_bounds(self, transform_value);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 };
 
@@ -1160,14 +1272,20 @@ pub const Context = opaque {
 
     extern fn pixie_new_context(width: isize, height: isize) callconv(.C) *Context;
     /// Create a new Context that will draw to a new image of width and height.
-    pub inline fn init(width: isize, height: isize) *Context {
-        return pixie_new_context(width, height);
+    pub inline fn init(width: isize, height: isize) Error!*Context {
+        const result = pixie_new_context(width, height);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_new_context_from_image(image: *Image) callconv(.C) *Context;
     /// Create a new Context that will draw to image.
-    pub inline fn initFromImage(image: *Image) *Context {
-        return pixie_new_context_from_image(image);
+    pub inline fn initFromImage(image: *Image) Error!*Context {
+        const result = pixie_new_context_from_image(image);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_get_image(self: *Context) callconv(.C) *Image;
@@ -1291,16 +1409,22 @@ pub const Context = opaque {
     /// Saves the entire state of the context by pushing the current state onto
     /// a stack and allocates a new image layer for subsequent drawing. Calling
     /// restore blends the current layer image onto the prior layer or root image.
-    pub inline fn saveLayer(self: *Context) void {
-        return pixie_context_save_layer(self);
+    pub inline fn saveLayer(self: *Context) Error!void {
+        const result = pixie_context_save_layer(self);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_restore(self: *Context) callconv(.C) void;
     /// Restores the most recently saved context state by popping the top entry
     /// in the drawing state stack. If there is no saved state, this method does
     /// nothing.
-    pub inline fn restore(self: *Context) void {
-        return pixie_context_restore(self);
+    pub inline fn restore(self: *Context) Error!void {
+        const result = pixie_context_restore(self);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_begin_path(self: *Context) callconv(.C) void;
@@ -1319,49 +1443,70 @@ pub const Context = opaque {
 
     extern fn pixie_context_fill(self: *Context, winding_rule: WindingRule) callconv(.C) void;
     /// Fills the current path with the current fillStyle.
-    pub inline fn fill(self: *Context, winding_rule: WindingRule) void {
-        return pixie_context_fill(self, winding_rule);
+    pub inline fn fill(self: *Context, winding_rule: WindingRule) Error!void {
+        const result = pixie_context_fill(self, winding_rule);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_path_fill(self: *Context, path: *Path, winding_rule: WindingRule) callconv(.C) void;
     /// Fills the path with the current fillStyle.
-    pub inline fn fillPath(self: *Context, path: *Path, winding_rule: WindingRule) void {
-        return pixie_context_path_fill(self, path, winding_rule);
+    pub inline fn fillPath(self: *Context, path: *Path, winding_rule: WindingRule) Error!void {
+        const result = pixie_context_path_fill(self, path, winding_rule);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_clip(self: *Context, winding_rule: WindingRule) callconv(.C) void;
     /// Turns the current path into the current clipping region. The previous
     /// clipping region, if any, is intersected with the current or given path
     /// to create the new clipping region.
-    pub inline fn clip(self: *Context, winding_rule: WindingRule) void {
-        return pixie_context_clip(self, winding_rule);
+    pub inline fn clip(self: *Context, winding_rule: WindingRule) Error!void {
+        const result = pixie_context_clip(self, winding_rule);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_path_clip(self: *Context, path: *Path, winding_rule: WindingRule) callconv(.C) void;
     /// Turns the path into the current clipping region. The previous clipping
     /// region, if any, is intersected with the current or given path to create
     /// the new clipping region.
-    pub inline fn clipPath(self: *Context, path: *Path, winding_rule: WindingRule) void {
-        return pixie_context_path_clip(self, path, winding_rule);
+    pub inline fn clipPath(self: *Context, path: *Path, winding_rule: WindingRule) Error!void {
+        const result = pixie_context_path_clip(self, path, winding_rule);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_stroke(self: *Context) callconv(.C) void;
     /// Strokes (outlines) the current or given path with the current strokeStyle.
-    pub inline fn stroke(self: *Context) void {
-        return pixie_context_stroke(self);
+    pub inline fn stroke(self: *Context) Error!void {
+        const result = pixie_context_stroke(self);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_path_stroke(self: *Context, path: *Path) callconv(.C) void;
     /// Strokes (outlines) the current or given path with the current strokeStyle.
-    pub inline fn strokePath(self: *Context, path: *Path) void {
-        return pixie_context_path_stroke(self, path);
+    pub inline fn strokePath(self: *Context, path: *Path) Error!void {
+        const result = pixie_context_path_stroke(self, path);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_measure_text(self: *Context, text: [*:0]const u8) callconv(.C) TextMetrics;
     /// Returns a TextMetrics object that contains information about the measured
     /// text (such as its width, for example).
-    pub inline fn measureText(self: *Context, text: [:0]const u8) TextMetrics {
-        return pixie_context_measure_text(self, text.ptr);
+    pub inline fn measureText(self: *Context, text: [:0]const u8) Error!TextMetrics {
+        const result = pixie_context_measure_text(self, text.ptr);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_get_transform(self: *Context) callconv(.C) Matrix3;
@@ -1401,18 +1546,27 @@ pub const Context = opaque {
 
     extern fn pixie_context_draw_image(self: *Context, image: *Image, dx: f32, dy: f32) callconv(.C) void;
     /// Draws a source image onto the destination image.
-    pub inline fn drawImage(self: *Context, image: *Image, dx: f32, dy: f32) void {
-        return pixie_context_draw_image(self, image, dx, dy);
+    pub inline fn drawImage(self: *Context, image: *Image, dx: f32, dy: f32) Error!void {
+        const result = pixie_context_draw_image(self, image, dx, dy);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_draw_image2(self: *Context, image: *Image, dx: f32, dy: f32, d_width: f32, d_height: f32) callconv(.C) void;
-    pub inline fn drawImage2(self: *Context, image: *Image, dx: f32, dy: f32, d_width: f32, d_height: f32) void {
-        return pixie_context_draw_image2(self, image, dx, dy, d_width, d_height);
+    pub inline fn drawImage2(self: *Context, image: *Image, dx: f32, dy: f32, d_width: f32, d_height: f32) Error!void {
+        const result = pixie_context_draw_image2(self, image, dx, dy, d_width, d_height);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_draw_image3(self: *Context, image: *Image, sx: f32, sy: f32, s_width: f32, s_height: f32, dx: f32, dy: f32, d_width: f32, d_height: f32) callconv(.C) void;
-    pub inline fn drawImage3(self: *Context, image: *Image, sx: f32, sy: f32, s_width: f32, s_height: f32, dx: f32, dy: f32, d_width: f32, d_height: f32) void {
-        return pixie_context_draw_image3(self, image, sx, sy, s_width, s_height, dx, dy, d_width, d_height);
+    pub inline fn drawImage3(self: *Context, image: *Image, sx: f32, sy: f32, s_width: f32, s_height: f32, dx: f32, dy: f32, d_width: f32, d_height: f32) Error!void {
+        const result = pixie_context_draw_image3(self, image, sx, sy, s_width, s_height, dx, dy, d_width, d_height);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_move_to(self: *Context, x: f32, y: f32) callconv(.C) void;
@@ -1449,14 +1603,20 @@ pub const Context = opaque {
 
     extern fn pixie_context_arc(self: *Context, x: f32, y: f32, r: f32, a0: f32, a1: f32, ccw: bool) callconv(.C) void;
     /// Draws a circular arc.
-    pub inline fn arc(self: *Context, x: f32, y: f32, r: f32, a0: f32, a1: f32, ccw: bool) void {
-        return pixie_context_arc(self, x, y, r, a0, a1, ccw);
+    pub inline fn arc(self: *Context, x: f32, y: f32, r: f32, a0: f32, a1: f32, ccw: bool) Error!void {
+        const result = pixie_context_arc(self, x, y, r, a0, a1, ccw);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_arc_to(self: *Context, x1: f32, y1: f32, x2: f32, y2: f32, radius: f32) callconv(.C) void;
     /// Draws a circular arc using the given control points and radius.
-    pub inline fn arcTo(self: *Context, x1: f32, y1: f32, x2: f32, y2: f32, radius: f32) void {
-        return pixie_context_arc_to(self, x1, y1, x2, y2, radius);
+    pub inline fn arcTo(self: *Context, x1: f32, y1: f32, x2: f32, y2: f32, radius: f32) Error!void {
+        const result = pixie_context_arc_to(self, x1, y1, x2, y2, radius);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_rect(self: *Context, x: f32, y: f32, width: f32, height: f32) callconv(.C) void;
@@ -1485,48 +1645,69 @@ pub const Context = opaque {
 
     extern fn pixie_context_polygon(self: *Context, x: f32, y: f32, size: f32, sides: isize) callconv(.C) void;
     /// Adds an n-sided regular polygon at (x, y) of size to the current path.
-    pub inline fn polygon(self: *Context, x: f32, y: f32, size: f32, sides: isize) void {
-        return pixie_context_polygon(self, x, y, size, sides);
+    pub inline fn polygon(self: *Context, x: f32, y: f32, size: f32, sides: isize) Error!void {
+        const result = pixie_context_polygon(self, x, y, size, sides);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_clear_rect(self: *Context, x: f32, y: f32, width: f32, height: f32) callconv(.C) void;
     /// Erases the pixels in a rectangular area.
-    pub inline fn clearRect(self: *Context, x: f32, y: f32, width: f32, height: f32) void {
-        return pixie_context_clear_rect(self, x, y, width, height);
+    pub inline fn clearRect(self: *Context, x: f32, y: f32, width: f32, height: f32) Error!void {
+        const result = pixie_context_clear_rect(self, x, y, width, height);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_fill_rect(self: *Context, x: f32, y: f32, width: f32, height: f32) callconv(.C) void;
     /// Draws a rectangle that is filled according to the current fillStyle.
-    pub inline fn fillRect(self: *Context, x: f32, y: f32, width: f32, height: f32) void {
-        return pixie_context_fill_rect(self, x, y, width, height);
+    pub inline fn fillRect(self: *Context, x: f32, y: f32, width: f32, height: f32) Error!void {
+        const result = pixie_context_fill_rect(self, x, y, width, height);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_stroke_rect(self: *Context, x: f32, y: f32, width: f32, height: f32) callconv(.C) void;
     /// Draws a rectangle that is stroked (outlined) according to the current
     /// strokeStyle and other context settings.
-    pub inline fn strokeRect(self: *Context, x: f32, y: f32, width: f32, height: f32) void {
-        return pixie_context_stroke_rect(self, x, y, width, height);
+    pub inline fn strokeRect(self: *Context, x: f32, y: f32, width: f32, height: f32) Error!void {
+        const result = pixie_context_stroke_rect(self, x, y, width, height);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_stroke_segment(self: *Context, ax: f32, ay: f32, bx: f32, by: f32) callconv(.C) void;
     /// Strokes a segment (draws a line from ax, ay to bx, by) according
     /// to the current strokeStyle and other context settings.
-    pub inline fn strokeSegment(self: *Context, ax: f32, ay: f32, bx: f32, by: f32) void {
-        return pixie_context_stroke_segment(self, ax, ay, bx, by);
+    pub inline fn strokeSegment(self: *Context, ax: f32, ay: f32, bx: f32, by: f32) Error!void {
+        const result = pixie_context_stroke_segment(self, ax, ay, bx, by);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_fill_text(self: *Context, text: [*:0]const u8, x: f32, y: f32) callconv(.C) void;
     /// Draws the outlines of the characters of a text string at the specified
     /// coordinates.
-    pub inline fn fillText(self: *Context, text: [:0]const u8, x: f32, y: f32) void {
-        return pixie_context_fill_text(self, text.ptr, x, y);
+    pub inline fn fillText(self: *Context, text: [:0]const u8, x: f32, y: f32) Error!void {
+        const result = pixie_context_fill_text(self, text.ptr, x, y);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_stroke_text(self: *Context, text: [*:0]const u8, x: f32, y: f32) callconv(.C) void;
     /// Draws the outlines of the characters of a text string at the specified
     /// coordinates.
-    pub inline fn strokeText(self: *Context, text: [:0]const u8, x: f32, y: f32) void {
-        return pixie_context_stroke_text(self, text.ptr, x, y);
+    pub inline fn strokeText(self: *Context, text: [:0]const u8, x: f32, y: f32) Error!void {
+        const result = pixie_context_stroke_text(self, text.ptr, x, y);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_translate(self: *Context, x: f32, y: f32) callconv(.C) void;
@@ -1550,28 +1731,40 @@ pub const Context = opaque {
 
     extern fn pixie_context_is_point_in_path(self: *Context, x: f32, y: f32, winding_rule: WindingRule) callconv(.C) bool;
     /// Returns whether or not the specified point is contained in the current path.
-    pub inline fn isPointInPath(self: *Context, x: f32, y: f32, winding_rule: WindingRule) bool {
-        return pixie_context_is_point_in_path(self, x, y, winding_rule);
+    pub inline fn isPointInPath(self: *Context, x: f32, y: f32, winding_rule: WindingRule) Error!bool {
+        const result = pixie_context_is_point_in_path(self, x, y, winding_rule);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_path_is_point_in_path(self: *Context, path: *Path, x: f32, y: f32, winding_rule: WindingRule) callconv(.C) bool;
     /// Returns whether or not the specified point is contained in the current path.
-    pub inline fn isPointInPathPath(self: *Context, path: *Path, x: f32, y: f32, winding_rule: WindingRule) bool {
-        return pixie_context_path_is_point_in_path(self, path, x, y, winding_rule);
+    pub inline fn isPointInPathPath(self: *Context, path: *Path, x: f32, y: f32, winding_rule: WindingRule) Error!bool {
+        const result = pixie_context_path_is_point_in_path(self, path, x, y, winding_rule);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_is_point_in_stroke(self: *Context, x: f32, y: f32) callconv(.C) bool;
     /// Returns whether or not the specified point is inside the area contained
     /// by the stroking of a path.
-    pub inline fn isPointInStroke(self: *Context, x: f32, y: f32) bool {
-        return pixie_context_is_point_in_stroke(self, x, y);
+    pub inline fn isPointInStroke(self: *Context, x: f32, y: f32) Error!bool {
+        const result = pixie_context_is_point_in_stroke(self, x, y);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 
     extern fn pixie_context_path_is_point_in_stroke(self: *Context, path: *Path, x: f32, y: f32) callconv(.C) bool;
     /// Returns whether or not the specified point is inside the area contained
     /// by the stroking of a path.
-    pub inline fn isPointInStrokePath(self: *Context, path: *Path, x: f32, y: f32) bool {
-        return pixie_context_path_is_point_in_stroke(self, path, x, y);
+    pub inline fn isPointInStrokePath(self: *Context, path: *Path, x: f32, y: f32) Error!bool {
+        const result = pixie_context_path_is_point_in_stroke(self, path, x, y);
+        if (checkError())
+            return error.PixieError;
+        return result;
     }
 };
 

@@ -2,7 +2,7 @@ const std = @import("std");
 const pixie = @import("pixie-zig");
 
 pub fn main() !void {
-    var img = pixie.Image.init(200, 200);
+    var img = try pixie.Image.init(200, 200);
     defer img.deinit();
     img.fill(.{ .r = 1, .g = 1, .b = 1, .a = 1 });
 
@@ -32,6 +32,6 @@ pub fn main() !void {
     );
     defer path.deinit();
 
-    img.fillPath(path, paint, pixie.Matrix3.identity(), .non_zero);
-    img.writeToFile("gradient_heart.png");
+    try img.fillPath(path, paint, pixie.Matrix3.identity(), .non_zero);
+    try img.writeToFile("gradient_heart.png");
 }
