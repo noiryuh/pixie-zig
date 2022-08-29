@@ -24,12 +24,12 @@ pub fn build(b: *std.build.Builder) void {
 
                 // // Cross-compile for Linux Glibc
                 // "-t:-target x86_64-linux-gnu",
-                // "-t:-target x86_64-linux-gnu",
+                // "-l:-target x86_64-linux-gnu",
                 // "--os:linux",
 
                 // // Cross-compile for Linux Musl
                 // "-t:-target x86_64-linux-musl",
-                // "-t:-target x86_64-linux-musl",
+                // "-l:-target x86_64-linux-musl",
                 // "--os:linux",
 
                 // // Cross-compile for Windows
@@ -53,6 +53,7 @@ pub fn build(b: *std.build.Builder) void {
     }});
 }
 ```
+
 *(for cross-compiling, copy the `// Cross-compile` section and use `zig build -Dtarget=arch-os-abi` like in above example)*
 
 
